@@ -95,11 +95,11 @@
             border-color: #a5b4fc;
         }
 
-        /* Mobile: board ~78vw so HOLD/NEXT/stats above stay visible */
+        /* Mobile-first: board nearly full screen width */
         @media (max-width: 767px) {
             #p1GameCanvas,
             #p2GameCanvas {
-                width: min(78vw, 300px) !important;
+                width: min(96vw, 100%) !important;
                 height: auto !important;
                 aspect-ratio: 1 / 2;
             }
@@ -112,19 +112,14 @@
 
             #p1CanvasCard,
             #p2CanvasCard {
-                width: min(78vw, 300px);
-                padding: 0.2rem !important;
+                width: min(96vw, 100%);
+                padding: 0.25rem !important;
             }
 
-            /* Top info row matches board width */
-            .board-top-row {
-                width: min(78vw, 300px);
-            }
-        }
-
-        @media (min-width: 768px) {
-            .board-top-row {
-                width: 280px;
+            /* Compact HOLD / NEXT above board */
+            #p1BoardContainer .glass-panel,
+            #p2BoardContainer .glass-panel {
+                max-width: none;
             }
         }
     </style>
@@ -509,50 +504,70 @@
 
             <!-- ================= PLAYER 1 BOARD ================= -->
             <div id="p1BoardContainer"
-                class="flex flex-col items-center justify-center gap-1.5 sm:gap-2 w-full">
+                class="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-2 sm:gap-3 w-full max-w-full lg:max-w-none">
 
-                <!-- Top row: HOLD | NEXT | 最高+SCORE/等级 (same row above board) -->
-                <div class="board-top-row flex justify-center items-stretch gap-1 sm:gap-2">
-                    <div class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col items-center justify-center border border-slate-700/60 flex-1 min-w-0">
-                        <span class="text-[8px] sm:text-[10px] font-bold text-cyan-400 tracking-wider uppercase mb-0.5">HOLD</span>
-                        <div class="w-11 h-11 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg flex items-center justify-center p-0.5 border border-slate-800">
-                            <canvas id="p1HoldCanvas" width="80" height="80" class="w-full h-full"></canvas>
+                <!-- Center column: HOLD + NEXT on top of the game board -->
+                <div class="relative order-1 lg:order-2 flex flex-col items-center gap-1.5 sm:gap-2 w-full lg:w-auto">
+                    <!-- HOLD & NEXT above board -->
+                    <div class="w-full flex justify-center gap-2 sm:gap-3">
+                        <div class="glass-panel p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl flex flex-col items-center border border-slate-700/60 w-[88px] sm:w-[100px]">
+                            <span class="text-[9px] sm:text-[10px] font-bold text-cyan-400 tracking-wider uppercase mb-0.5 sm:mb-1">P1 HOLD</span>
+                            <div class="w-14 h-14 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg sm:rounded-xl flex items-center justify-center p-0.5 border border-slate-800">
+                                <canvas id="p1HoldCanvas" width="80" height="80" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+                        <div class="glass-panel p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl flex flex-col items-center border border-slate-700/60 w-[88px] sm:w-[100px]">
+                            <span class="text-[9px] sm:text-[10px] font-bold text-cyan-400 tracking-wider uppercase mb-0.5 sm:mb-1">P1 NEXT</span>
+                            <div class="w-14 h-14 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg sm:rounded-xl flex items-center justify-center p-0.5 border border-slate-800">
+                                <canvas id="p1NextCanvas" width="80" height="80" class="w-full h-full"></canvas>
+                            </div>
                         </div>
                     </div>
-                    <div class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col items-center justify-center border border-slate-700/60 flex-1 min-w-0">
-                        <span class="text-[8px] sm:text-[10px] font-bold text-cyan-400 tracking-wider uppercase mb-0.5">NEXT</span>
-                        <div class="w-11 h-11 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg flex items-center justify-center p-0.5 border border-slate-800">
-                            <canvas id="p1NextCanvas" width="80" height="80" class="w-full h-full"></canvas>
+
+                    <!-- Game Board Canvas -->
+                    <div id="p1CanvasCard"
+                        class="relative rounded-2xl p-1.5 sm:p-2 glass-panel border border-indigo-500/30 neon-border">
+                        <div class="absolute -top-3 left-3 sm:left-4 px-2 py-0.5 rounded-md bg-indigo-600 text-white font-bold text-[9px] sm:text-[10px] uppercase tracking-wider z-10 shadow-md">
+                            PLAYER 1
                         </div>
-                    </div>
-                    <div class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col justify-center border border-slate-700/60 flex-[1.35] min-w-0 gap-0.5">
-                        <div class="flex justify-between items-center gap-1">
-                            <span class="text-[8px] font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-0.5"></i>最高</span>
-                            <span id="p1HighScoreText" class="font-arcade text-[10px] sm:text-xs text-yellow-300 truncate">0</span>
-                        </div>
-                        <div class="flex justify-between items-center gap-1">
-                            <span class="text-[8px] font-bold text-slate-400 uppercase">SCORE</span>
-                            <span id="p1ScoreText" class="font-arcade text-[10px] sm:text-xs text-cyan-300 truncate">0</span>
-                        </div>
-                        <div class="w-full bg-slate-900 rounded-full h-1 overflow-hidden border border-slate-800">
-                            <div id="p1LevelProgressBar" class="bg-gradient-to-r from-cyan-400 to-indigo-500 h-full w-0 transition-all duration-300"></div>
-                        </div>
-                        <div class="flex justify-between items-center text-[8px]">
-                            <span class="text-slate-400">LVL <span id="p1LevelText" class="font-arcade text-purple-300">1</span></span>
-                            <span class="text-slate-400">行 <span id="p1LinesText" class="font-arcade text-emerald-300">0</span></span>
-                            <span id="p1LevelReqText" class="text-slate-500 hidden sm:inline">0/10</span>
-                        </div>
+                        <canvas id="p1GameCanvas" width="280" height="560"
+                            class="rounded-xl bg-slate-950/90 block max-w-full"></canvas>
                     </div>
                 </div>
 
-                <!-- Game Board Canvas -->
-                <div id="p1CanvasCard"
-                    class="relative rounded-2xl p-1 sm:p-2 glass-panel border border-indigo-500/30 neon-border">
-                    <div class="absolute -top-2.5 left-2 sm:left-3 px-1.5 py-0.5 rounded-md bg-indigo-600 text-white font-bold text-[8px] sm:text-[10px] uppercase tracking-wider z-10 shadow-md">
-                        PLAYER 1
+                <!-- Right side: 最高 (was NEXT position) + Score/Level -->
+                <div class="w-full lg:w-36 flex flex-row lg:flex-col justify-center lg:justify-between gap-1.5 lg:gap-2 order-2 lg:order-3">
+                    <div class="glass-panel p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl flex-1 flex flex-col items-center justify-center border border-slate-700/60 max-w-[110px] lg:max-w-none">
+                        <span class="text-[9px] sm:text-[10px] font-bold text-amber-400 tracking-wider uppercase mb-0.5">
+                            <i class="fa-solid fa-trophy mr-1"></i>最高
+                        </span>
+                        <span id="p1HighScoreText" class="font-arcade text-xs sm:text-sm text-yellow-300">0</span>
                     </div>
-                    <canvas id="p1GameCanvas" width="280" height="560"
-                        class="rounded-xl bg-slate-950/90 block max-w-full"></canvas>
+                    <div class="glass-panel p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl flex-[1.3] flex flex-col gap-1 sm:gap-2 border border-slate-700/60 justify-center min-w-0">
+                        <div>
+                            <span class="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider block">SCORE</span>
+                            <span id="p1ScoreText" class="font-arcade text-xs sm:text-sm text-cyan-300 truncate block">0</span>
+                        </div>
+                        <div class="border-t border-slate-800 pt-1">
+                            <div class="flex justify-between items-center text-[8px] sm:text-[9px] mb-0.5">
+                                <span class="text-indigo-300 font-bold">进度</span>
+                                <span id="p1LevelReqText" class="text-slate-400">0/10行</span>
+                            </div>
+                            <div class="w-full bg-slate-900 rounded-full h-1 sm:h-1.5 overflow-hidden border border-slate-800">
+                                <div id="p1LevelProgressBar" class="bg-gradient-to-r from-cyan-400 to-indigo-500 h-full w-0 transition-all duration-300"></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center border-t border-slate-800 pt-1 text-xs">
+                            <div>
+                                <span class="text-[7px] sm:text-[8px] font-bold text-slate-400 uppercase block">LVL</span>
+                                <span id="p1LevelText" class="font-arcade text-[11px] sm:text-xs text-purple-300">1</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[7px] sm:text-[8px] font-bold text-slate-400 uppercase block">LINES</span>
+                                <span id="p1LinesText" class="font-arcade text-[11px] sm:text-xs text-emerald-300">0</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -566,50 +581,70 @@
 
             <!-- ================= PLAYER 2 BOARD (2P Mode) ================= -->
             <div id="p2BoardContainer"
-                class="hidden flex-col items-center justify-center gap-1.5 sm:gap-2 w-full">
+                class="hidden flex-col lg:flex-row items-center lg:items-start justify-center gap-2 sm:gap-3 w-full max-w-full lg:max-w-none">
 
-                <!-- Top row: HOLD | NEXT | 最高+SCORE/等级 -->
-                <div class="board-top-row flex justify-center items-stretch gap-1 sm:gap-2">
-                    <div class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col items-center justify-center border border-slate-700/60 flex-1 min-w-0">
-                        <span class="text-[8px] sm:text-[10px] font-bold text-rose-400 tracking-wider uppercase mb-0.5">HOLD</span>
-                        <div class="w-11 h-11 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg flex items-center justify-center p-0.5 border border-slate-800">
-                            <canvas id="p2HoldCanvas" width="80" height="80" class="w-full h-full"></canvas>
+                <!-- Center column: HOLD + NEXT on top of the game board -->
+                <div class="relative order-1 lg:order-2 flex flex-col items-center gap-1.5 sm:gap-2 w-full lg:w-auto">
+                    <!-- HOLD & NEXT above board -->
+                    <div class="w-full flex justify-center gap-2 sm:gap-3">
+                        <div class="glass-panel p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl flex flex-col items-center border border-slate-700/60 w-[88px] sm:w-[100px]">
+                            <span class="text-[9px] sm:text-[10px] font-bold text-rose-400 tracking-wider uppercase mb-0.5 sm:mb-1">P2 HOLD</span>
+                            <div class="w-14 h-14 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg sm:rounded-xl flex items-center justify-center p-0.5 border border-slate-800">
+                                <canvas id="p2HoldCanvas" width="80" height="80" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+                        <div class="glass-panel p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl flex flex-col items-center border border-slate-700/60 w-[88px] sm:w-[100px]">
+                            <span class="text-[9px] sm:text-[10px] font-bold text-rose-400 tracking-wider uppercase mb-0.5 sm:mb-1">P2 NEXT</span>
+                            <div class="w-14 h-14 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg sm:rounded-xl flex items-center justify-center p-0.5 border border-slate-800">
+                                <canvas id="p2NextCanvas" width="80" height="80" class="w-full h-full"></canvas>
+                            </div>
                         </div>
                     </div>
-                    <div class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col items-center justify-center border border-slate-700/60 flex-1 min-w-0">
-                        <span class="text-[8px] sm:text-[10px] font-bold text-rose-400 tracking-wider uppercase mb-0.5">NEXT</span>
-                        <div class="w-11 h-11 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg flex items-center justify-center p-0.5 border border-slate-800">
-                            <canvas id="p2NextCanvas" width="80" height="80" class="w-full h-full"></canvas>
+
+                    <!-- Game Board Canvas -->
+                    <div id="p2CanvasCard"
+                        class="relative rounded-2xl p-1.5 sm:p-2 glass-panel border border-rose-500/30 neon-border-p2">
+                        <div class="absolute -top-3 left-3 sm:left-4 px-2 py-0.5 rounded-md bg-rose-600 text-white font-bold text-[9px] sm:text-[10px] uppercase tracking-wider z-10 shadow-md">
+                            PLAYER 2
                         </div>
-                    </div>
-                    <div class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col justify-center border border-slate-700/60 flex-[1.35] min-w-0 gap-0.5">
-                        <div class="flex justify-between items-center gap-1">
-                            <span class="text-[8px] font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-0.5"></i>最高</span>
-                            <span id="p2HighScoreText" class="font-arcade text-[10px] sm:text-xs text-yellow-300 truncate">0</span>
-                        </div>
-                        <div class="flex justify-between items-center gap-1">
-                            <span class="text-[8px] font-bold text-slate-400 uppercase">SCORE</span>
-                            <span id="p2ScoreText" class="font-arcade text-[10px] sm:text-xs text-rose-300 truncate">0</span>
-                        </div>
-                        <div class="w-full bg-slate-900 rounded-full h-1 overflow-hidden border border-slate-800">
-                            <div id="p2LevelProgressBar" class="bg-gradient-to-r from-rose-400 to-amber-500 h-full w-0 transition-all duration-300"></div>
-                        </div>
-                        <div class="flex justify-between items-center text-[8px]">
-                            <span class="text-slate-400">LVL <span id="p2LevelText" class="font-arcade text-purple-300">1</span></span>
-                            <span class="text-slate-400">行 <span id="p2LinesText" class="font-arcade text-emerald-300">0</span></span>
-                            <span id="p2LevelReqText" class="text-slate-500 hidden sm:inline">0/10</span>
-                        </div>
+                        <canvas id="p2GameCanvas" width="280" height="560"
+                            class="rounded-xl bg-slate-950/90 block max-w-full"></canvas>
                     </div>
                 </div>
 
-                <!-- Game Board Canvas -->
-                <div id="p2CanvasCard"
-                    class="relative rounded-2xl p-1 sm:p-2 glass-panel border border-rose-500/30 neon-border-p2">
-                    <div class="absolute -top-2.5 left-2 sm:left-3 px-1.5 py-0.5 rounded-md bg-rose-600 text-white font-bold text-[8px] sm:text-[10px] uppercase tracking-wider z-10 shadow-md">
-                        PLAYER 2
+                <!-- Right side: 最高 (was NEXT position) + Score/Level -->
+                <div class="w-full lg:w-36 flex flex-row lg:flex-col justify-center lg:justify-between gap-1.5 lg:gap-2 order-2 lg:order-3">
+                    <div class="glass-panel p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl flex-1 flex flex-col items-center justify-center border border-slate-700/60 max-w-[110px] lg:max-w-none">
+                        <span class="text-[9px] sm:text-[10px] font-bold text-amber-400 tracking-wider uppercase mb-0.5">
+                            <i class="fa-solid fa-trophy mr-1"></i>最高
+                        </span>
+                        <span id="p2HighScoreText" class="font-arcade text-xs sm:text-sm text-yellow-300">0</span>
                     </div>
-                    <canvas id="p2GameCanvas" width="280" height="560"
-                        class="rounded-xl bg-slate-950/90 block max-w-full"></canvas>
+                    <div class="glass-panel p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl flex-[1.3] flex flex-col gap-1 sm:gap-2 border border-slate-700/60 justify-center min-w-0">
+                        <div>
+                            <span class="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider block">SCORE</span>
+                            <span id="p2ScoreText" class="font-arcade text-xs sm:text-sm text-rose-300 truncate block">0</span>
+                        </div>
+                        <div class="border-t border-slate-800 pt-1">
+                            <div class="flex justify-between items-center text-[8px] sm:text-[9px] mb-0.5">
+                                <span class="text-rose-300 font-bold">进度</span>
+                                <span id="p2LevelReqText" class="text-slate-400">0/10行</span>
+                            </div>
+                            <div class="w-full bg-slate-900 rounded-full h-1 sm:h-1.5 overflow-hidden border border-slate-800">
+                                <div id="p2LevelProgressBar" class="bg-gradient-to-r from-rose-400 to-amber-500 h-full w-0 transition-all duration-300"></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center border-t border-slate-800 pt-1 text-xs">
+                            <div>
+                                <span class="text-[7px] sm:text-[8px] font-bold text-slate-400 uppercase block">LVL</span>
+                                <span id="p2LevelText" class="font-arcade text-[11px] sm:text-xs text-purple-300">1</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[7px] sm:text-[8px] font-bold text-slate-400 uppercase block">LINES</span>
+                                <span id="p2LinesText" class="font-arcade text-[11px] sm:text-xs text-emerald-300">0</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
