@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tetris Game - 俄罗斯方块 (单人/双人对战与关卡数据统计)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -728,7 +728,7 @@
         <!-- Mobile swipe tip -->
         <p class="md:hidden text-[11px] text-slate-400 leading-relaxed">
             <i class="fa-solid fa-hand-pointer mr-1 text-cyan-400"></i>
-            滑动：←→ 移动 · ↓ 硬降 · ↑ 旋转 · 双击暂存 · 按住左右侧连续移动
+            在棋盘上滑动：← 左移 · → 右移 · ↓ 硬降 · ↑ 旋转
         </p>
         <!-- Desktop keyboard tip -->
         <p class="hidden md:block">
@@ -1000,8 +1000,6 @@
                 this.dropCounter = 0;
                 this.dropInterval = Math.max(1000 - (this.level - 1) * 80, 80);
                 this.isGameOver = false;
-                this.isClearing = false;       // true while line-clear animation plays
-                this.flashingRows = [];       // rows currently flashing during clear anim
 
                 // Detailed Statistics Tracking
                 this.stats = {
@@ -1114,8 +1112,6 @@
                 this.canHold = true;
                 this.holdPiece = null;
                 this.isGameOver = false;
-                this.isClearing = false;
-                this.flashingRows = [];
 
                 // Reset detailed stats
                 this.stats = {
@@ -1138,8 +1134,6 @@
             clearBoardAndRespawn() {
                 this.board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
                 this.isGameOver = false;
-                this.isClearing = false;
-                this.flashingRows = [];
                 this.canHold = true;
                 this.holdPiece = null;
                 this.dropCounter = 0;
@@ -1209,7 +1203,7 @@
             }
 
             rotatePiece(dir = 1) {
-                if (this.isGameOver || this.manager.isPaused || this.isClearing || !this.currentPiece) return;
+                if (this.isGameOver || this.manager.isPaused) return;
                 const rotated = this.rotateMatrix(this.currentPiece.matrix, dir);
                 const kickOffsets = [{ x: 0, y: 0 }, { x: -1, y: 0 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: -2, y: 0 }, { x: 2, y: 0 }];
                 for (const offset of kickOffsets) {
@@ -1224,7 +1218,7 @@
             }
 
             moveLeft() {
-                if (this.isGameOver || this.manager.isPaused || this.isClearing || !this.currentPiece) return;
+                if (this.isGameOver || this.manager.isPaused) return;
                 if (!this.checkCollision(this.currentPiece, -1, 0)) {
                     this.currentPiece.x--;
                     sound.playMove();
@@ -1232,7 +1226,7 @@
             }
 
             moveRight() {
-                if (this.isGameOver || this.manager.isPaused || this.isClearing || !this.currentPiece) return;
+                if (this.isGameOver || this.manager.isPaused) return;
                 if (!this.checkCollision(this.currentPiece, 1, 0)) {
                     this.currentPiece.x++;
                     sound.playMove();
@@ -1240,7 +1234,7 @@
             }
 
             softDrop() {
-                if (this.isGameOver || this.manager.isPaused || this.isClearing || !this.currentPiece) return;
+                if (this.isGameOver || this.manager.isPaused) return;
                 if (!this.checkCollision(this.currentPiece, 0, 1)) {
                     this.currentPiece.y++;
                     const scoreMult = this.manager.showGhost ? 1 : 1.5;
@@ -1254,7 +1248,7 @@
             }
 
             hardDrop() {
-                if (this.isGameOver || this.manager.isPaused || this.isClearing || !this.currentPiece) return;
+                if (this.isGameOver || this.manager.isPaused) return;
                 let dropDistance = 0;
                 while (!this.checkCollision(this.currentPiece, 0, 1)) {
                     this.currentPiece.y++;
@@ -1276,7 +1270,7 @@
             }
 
             hold() {
-                if (this.isGameOver || this.manager.isPaused || this.isClearing || !this.canHold || !this.currentPiece) return;
+                if (this.isGameOver || this.manager.isPaused || !this.canHold) return;
                 const currentType = this.currentPiece.type;
                 if (!this.holdPiece) {
                     this.holdPiece = currentType;
@@ -1299,7 +1293,6 @@
             }
 
             lockPiece() {
-                if (!this.currentPiece || this.isClearing) return;
                 const matrix = this.currentPiece.matrix;
                 for (let y = 0; y < matrix.length; y++) {
                     for (let x = 0; x < matrix[y].length; x++) {
@@ -1312,100 +1305,70 @@
                         }
                     }
                 }
-                // Hide active piece while clearing / spawning
-                this.currentPiece = null;
-                this.clearLinesAnimated();
+                this.clearLines();
+                this.canHold = true;
+                this.spawnPiece();
             }
 
-            /**
-             * Animate line clears one row at a time (bottom → top),
-             * synced with clear SFX interval (~200ms each).
-             */
-            async clearLinesAnimated() {
+            clearLines() {
+                let linesCleared = 0;
                 const clearedRowIndices = [];
+
                 for (let y = ROWS - 1; y >= 0; y--) {
                     if (this.board[y].every(cell => cell !== 0)) {
                         clearedRowIndices.push(y);
+                        linesCleared++;
                     }
                 }
 
-                const linesCleared = clearedRowIndices.length;
-                if (linesCleared === 0) {
-                    this.canHold = true;
-                    this.spawnPiece();
-                    return;
-                }
+                if (linesCleared > 0) {
+                    // Record Line Clear Detailed Statistics
+                    if (linesCleared === 1) this.stats.singles++;
+                    else if (linesCleared === 2) this.stats.doubles++;
+                    else if (linesCleared === 3) this.stats.triples++;
+                    else if (linesCleared >= 4) this.stats.tetrises++;
 
-                this.isClearing = true;
+                    clearedRowIndices.forEach(rowY => {
+                        this.particleSys.addParticlesForLine(rowY, this.board[rowY], this.blockSize);
+                    });
 
-                // Stats
-                if (linesCleared === 1) this.stats.singles++;
-                else if (linesCleared === 2) this.stats.doubles++;
-                else if (linesCleared === 3) this.stats.triples++;
-                else if (linesCleared >= 4) this.stats.tetrises++;
-
-                // Clear from bottom to top so indices stay valid as we splice
-                // Sort ascending so we remove lower rows first after adjusting
-                // Actually: remove from highest index (bottom) first so upper indices unchanged
-                const sortedDesc = [...clearedRowIndices].sort((a, b) => b - a);
-
-                for (let i = 0; i < sortedDesc.length; i++) {
-                    const rowY = sortedDesc[i];
-                    // Flash the row
-                    this.flashingRows = [rowY];
-                    this.particleSys.addParticlesForLine(rowY, this.board[rowY], this.blockSize);
-                    // Pitch rises with each successive clear
-                    sound.playSFX('clear', 1 + i * 0.15);
-
-                    // Brief flash hold
-                    await new Promise(r => setTimeout(r, 160));
-
-                    // Remove this single row and shift down
-                    this.board.splice(rowY, 1);
-                    this.board.unshift(Array(COLS).fill(0));
-                    this.flashingRows = [];
-
-                    // Gap between successive clears
-                    if (i < sortedDesc.length - 1) {
-                        await new Promise(r => setTimeout(r, 70));
+                    this.board = this.board.filter((row, idx) => !clearedRowIndices.includes(idx));
+                    while (this.board.length < ROWS) {
+                        this.board.unshift(Array(COLS).fill(0));
                     }
+
+                    const basePoints = [0, 100, 300, 500, 800];
+                    const scoreMult = this.manager.showGhost ? 1 : 1.5;
+                    this.score += Math.round(basePoints[Math.min(linesCleared, 4)] * this.level * scoreMult);
+                    this.lines += linesCleared;
+                    this.linesClearedInCurrentLevel += linesCleared;
+
+                    // Robust Level Up Logic using while loop to accurately calculate multi-level jumps
+                    let leveledUp = false;
+                    while (this.linesClearedInCurrentLevel >= this.linesPerLevel) {
+                        this.level++;
+                        this.linesClearedInCurrentLevel -= this.linesPerLevel;
+                        leveledUp = true;
+                    }
+
+                    sound.playClear(linesCleared);
+
+
+                    if (leveledUp) {
+                        // Recalculate drop interval based on new level
+                        this.dropInterval = Math.max(1000 - (this.level - 1) * 80, 80);
+                        sound.playWin();
+                    }
+
+
+
+                    if (this.score > this.highScore) {
+                        this.highScore = this.score;
+                        localStorage.setItem(`tetris_p${this.playerId}_high_score`, this.highScore.toString());
+                    }
+
+                    this.updateUI();
                 }
-
-                // Tetris bonus SFX
-                if (linesCleared >= 4) {
-                    sound.playSFX('tetris');
-                } else if (linesCleared >= 3) {
-                    setTimeout(() => sound.playSFX('tetris'), 40);
-                }
-
-                // Score & level
-                const basePoints = [0, 100, 300, 500, 800];
-                const scoreMult = this.manager.showGhost ? 1 : 1.5;
-                this.score += Math.round(basePoints[Math.min(linesCleared, 4)] * this.level * scoreMult);
-                this.lines += linesCleared;
-                this.linesClearedInCurrentLevel += linesCleared;
-
-                let leveledUp = false;
-                while (this.linesClearedInCurrentLevel >= this.linesPerLevel) {
-                    this.level++;
-                    this.linesClearedInCurrentLevel -= this.linesPerLevel;
-                    leveledUp = true;
-                }
-
-                if (leveledUp) {
-                    this.dropInterval = Math.max(1000 - (this.level - 1) * 80, 80);
-                    sound.playWin();
-                }
-
-                if (this.score > this.highScore) {
-                    this.highScore = this.score;
-                    localStorage.setItem(`tetris_p${this.playerId}_high_score`, this.highScore.toString());
-                }
-
-                this.updateUI();
-                this.isClearing = false;
-                this.canHold = true;
-                this.spawnPiece();
             }
 
             triggerShake() {
@@ -1501,14 +1464,9 @@
                             this.drawBlock(this.ctx, x, y, this.board[y][x]);
                         }
                     }
-                    // Flash overlay for rows being cleared
-                    if (this.flashingRows && this.flashingRows.includes(y)) {
-                        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
-                        this.ctx.fillRect(0, y * this.blockSize, COLS * this.blockSize, this.blockSize);
-                    }
                 }
 
-                if (this.currentPiece && !this.isGameOver && !this.isClearing) {
+                if (this.currentPiece && !this.isGameOver) {
                     const matrix = this.currentPiece.matrix;
                     if (this.manager.showGhost) {
                         const ghostY = this.getGhostY();
@@ -1533,14 +1491,14 @@
             }
 
             update(deltaTime) {
-                if (!this.isGameOver && !this.manager.isPaused && !this.isClearing) {
+                if (!this.isGameOver && !this.manager.isPaused) {
                     this.dropCounter += deltaTime;
                     if (this.dropCounter > this.dropInterval) {
                         this.softDrop();
                         this.dropCounter = 0;
                     }
+                    this.particleSys.update();
                 }
-                this.particleSys.update();
                 this.draw();
             }
         }
@@ -1978,29 +1936,18 @@
                     }
                 });
 
-                // ========== Touch / Swipe / Hold Controls (Mobile / Tablet) ==========
-                // Left swipe / hold left  → move left (hold = continuous)
-                // Right swipe / hold right → move right (hold = continuous)
-                // Down swipe  → hard drop
+                // ========== Swipe Gesture Controls (Mobile / Tablet) ==========
+                // Left swipe  → move left
+                // Right swipe → move right
+                // Down swipe  → hard drop (same as Space)
                 // Up swipe    → rotate clockwise
-                // Double tap  → HOLD
-                const SWIPE_THRESHOLD = 28;
-                const SWIPE_MAX_DURATION = 450;
-                const DOUBLE_TAP_MS = 320;
-                const HOLD_EDGE_RATIO = 0.32;      // left/right 32% of board width
-                const HOLD_MOVE_INTERVAL = 95;     // ms between continuous moves
-                const HOLD_START_DELAY = 140;      // ms before continuous move starts
+                const SWIPE_THRESHOLD = 28;      // minimum distance in px
+                const SWIPE_MAX_DURATION = 450;  // max time for a valid swipe (ms)
 
                 let touchStartX = 0;
                 let touchStartY = 0;
                 let touchStartTime = 0;
-                let activeTouchTarget = null;
-                let lastTapTime = 0;
-                let lastTapBoard = null;
-                let holdMoveTimer = null;
-                let holdMoveDir = 0; // -1 left, +1 right
-                let holdBoard = null;
-                let didHoldMove = false;
+                let activeTouchTarget = null;    // which board the touch started on
 
                 const getBoardFromTarget = (target) => {
                     if (!target) return null;
@@ -2010,42 +1957,9 @@
                     if (target.id === 'p2GameCanvas' || (target.closest && target.closest('#p2CanvasCard'))) {
                         return this.p2;
                     }
+                    // Fallback: if only 1P is active, allow swipe on main area
                     if (this.mode === '1P') return this.p1;
                     return null;
-                };
-
-                const stopHoldMove = () => {
-                    if (holdMoveTimer) {
-                        clearInterval(holdMoveTimer);
-                        holdMoveTimer = null;
-                    }
-                    holdMoveDir = 0;
-                    holdBoard = null;
-                };
-
-                const startHoldMove = (board, dir) => {
-                    stopHoldMove();
-                    holdBoard = board;
-                    holdMoveDir = dir;
-                    didHoldMove = false;
-                    // First move after short delay, then repeat
-                    holdMoveTimer = setTimeout(() => {
-                        if (!holdBoard || holdBoard.isGameOver || holdBoard.isClearing) {
-                            stopHoldMove();
-                            return;
-                        }
-                        if (holdMoveDir < 0) holdBoard.moveLeft();
-                        else holdBoard.moveRight();
-                        didHoldMove = true;
-                        holdMoveTimer = setInterval(() => {
-                            if (!holdBoard || holdBoard.isGameOver || holdBoard.isClearing || this.isPaused) {
-                                stopHoldMove();
-                                return;
-                            }
-                            if (holdMoveDir < 0) holdBoard.moveLeft();
-                            else holdBoard.moveRight();
-                        }, HOLD_MOVE_INTERVAL);
-                    }, HOLD_START_DELAY);
                 };
 
                 const onTouchStart = (e) => {
@@ -2055,24 +1969,10 @@
                     touchStartY = t.clientY;
                     touchStartTime = Date.now();
                     activeTouchTarget = e.target;
-                    didHoldMove = false;
-
-                    const board = getBoardFromTarget(e.target);
-                    if (!board || !this.isStarted || this.isPaused || board.isGameOver) return;
-
-                    // Determine if touch is on left/right edge of the canvas for continuous move
-                    const canvas = board.canvas;
-                    if (!canvas) return;
-                    const rect = canvas.getBoundingClientRect();
-                    const relX = (t.clientX - rect.left) / rect.width;
-                    if (relX < HOLD_EDGE_RATIO) {
-                        startHoldMove(board, -1);
-                    } else if (relX > 1 - HOLD_EDGE_RATIO) {
-                        startHoldMove(board, 1);
-                    }
                 };
 
                 const onTouchMove = (e) => {
+                    // Prevent page scroll while finger is on a game board
                     if (activeTouchTarget && (
                         activeTouchTarget.id === 'p1GameCanvas' ||
                         activeTouchTarget.id === 'p2GameCanvas' ||
@@ -2083,21 +1983,9 @@
                     )) {
                         e.preventDefault();
                     }
-                    // Cancel edge-hold if finger drifts far vertically or toward center
-                    if (holdMoveDir !== 0 && e.touches.length === 1) {
-                        const t = e.touches[0];
-                        const dy = Math.abs(t.clientY - touchStartY);
-                        const dx = Math.abs(t.clientX - touchStartX);
-                        if (dy > 40 || dx > 50) {
-                            stopHoldMove();
-                        }
-                    }
                 };
 
                 const onTouchEnd = (e) => {
-                    const wasHolding = didHoldMove;
-                    stopHoldMove();
-
                     if (!this.isStarted || this.isPaused) {
                         activeTouchTarget = null;
                         return;
@@ -2109,44 +1997,42 @@
 
                     const board = getBoardFromTarget(activeTouchTarget);
                     activeTouchTarget = null;
-                    if (!board || board.isGameOver || board.isClearing) return;
-
-                    // If continuous hold-move already happened, don't also treat as swipe/tap
-                    if (wasHolding) return;
+                    if (!board || board.isGameOver) return;
 
                     const t = e.changedTouches[0];
                     const dx = t.clientX - touchStartX;
                     const dy = t.clientY - touchStartY;
                     const duration = Date.now() - touchStartTime;
-                    const absDx = Math.abs(dx);
-                    const absDy = Math.abs(dy);
-
-                    // Small movement = tap → check double-tap for HOLD
-                    if (absDx < SWIPE_THRESHOLD && absDy < SWIPE_THRESHOLD) {
-                        const now = Date.now();
-                        if (now - lastTapTime < DOUBLE_TAP_MS && lastTapBoard === board) {
-                            board.hold();
-                            lastTapTime = 0;
-                            lastTapBoard = null;
-                        } else {
-                            lastTapTime = now;
-                            lastTapBoard = board;
-                        }
-                        return;
-                    }
 
                     if (duration > SWIPE_MAX_DURATION) return;
 
-                    // Dominant axis swipe
+                    const absDx = Math.abs(dx);
+                    const absDy = Math.abs(dy);
+
+                    // Ignore very small movements (treat as tap)
+                    if (absDx < SWIPE_THRESHOLD && absDy < SWIPE_THRESHOLD) return;
+
+                    // Prefer the dominant axis
                     if (absDx > absDy) {
-                        if (dx > 0) board.moveRight();
-                        else board.moveLeft();
+                        // Horizontal swipe
+                        if (dx > 0) {
+                            board.moveRight();
+                        } else {
+                            board.moveLeft();
+                        }
                     } else {
-                        if (dy > 0) board.hardDrop();
-                        else board.rotatePiece(1);
+                        // Vertical swipe
+                        if (dy > 0) {
+                            // Swipe down → hard drop
+                            board.hardDrop();
+                        } else {
+                            // Swipe up → rotate clockwise
+                            board.rotatePiece(1);
+                        }
                     }
                 };
 
+                // Attach listeners to both canvases + their cards (larger hit area)
                 const swipeTargets = [
                     document.getElementById('p1GameCanvas'),
                     document.getElementById('p1CanvasCard'),
@@ -2158,32 +2044,8 @@
                     el.addEventListener('touchstart', onTouchStart, { passive: true });
                     el.addEventListener('touchmove', onTouchMove, { passive: false });
                     el.addEventListener('touchend', onTouchEnd, { passive: true });
-                    el.addEventListener('touchcancel', () => {
-                        stopHoldMove();
-                        activeTouchTarget = null;
-                    }, { passive: true });
+                    el.addEventListener('touchcancel', () => { activeTouchTarget = null; }, { passive: true });
                 });
-
-                // ========== Mobile auto page scale ==========
-                // Fit content on phones; ~65% works well on Pixel-class devices
-                const applyMobileScale = () => {
-                    const w = window.innerWidth;
-                    if (w >= 768) {
-                        document.body.style.zoom = '';
-                        return;
-                    }
-                    let z = 0.65;
-                    if (w < 360) z = 0.58;
-                    else if (w < 390) z = 0.62;
-                    else if (w <= 430) z = 0.65;   // Pixel 9 etc.
-                    else if (w < 500) z = 0.70;
-                    else if (w < 600) z = 0.78;
-                    else z = 0.85;
-                    document.body.style.zoom = String(z);
-                };
-                applyMobileScale();
-                window.addEventListener('resize', applyMobileScale);
-                window.addEventListener('orientationchange', () => setTimeout(applyMobileScale, 120));
             }
 
             loop(time = 0) {
