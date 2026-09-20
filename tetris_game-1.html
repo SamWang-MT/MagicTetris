@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris Game</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: #1e293b;
+            --border-color: #334155;
+            --accent-color: #3b82f6;
+            --accent-gold: #f59e0b;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* 顶栏控制条 */
+        header {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px;
+            background: var(--panel-bg);
+            border-bottom: 2px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            margin-bottom: 16px;
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--accent-color);
+            text-transform: uppercase;
+        }
+
+        .top-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            background: #2d3748;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: #4a5568;
+            border-color: #64748b;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-gold {
+            background: var(--accent-gold);
+            border-color: var(--accent-gold);
+            color: #000;
+            font-weight: bold;
+        }
+
+        /* 游戏主容器 */
+        .main-container {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            justify-content: center;
+            position: relative;
+        }
+
+        .game-panel {
+            background: var(--panel-bg);
+            padding: 16px;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            display: flex;
+            gap: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        .board-container {
+            position: relative;
+        }
+
+        canvas.board {
+            background: #090d16;
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            display: block;
+        }
+
+        .side-info {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            width: 140px;
+        }
+
+        .info-card {
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .info-card h4 {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .info-card .value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .bonus-badge {
+            font-size: 0.7rem;
+            color: #10b981;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--accent-color);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        canvas.mini-preview {
+            background: #090d16;
+            border-radius: 4px;
+            margin: 4px auto 0 auto;
+            display: block;
+        }
+
+        /* 模态框统一样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.2s;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-card {
+            background: var(--panel-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px 32px;
+            width: 90%;
+            max-width: 480px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .modal-card h2 {
+            font-size: 1.6rem;
+            margin-bottom: 16px;
+            color: var(--accent-color);
+        }
+
+        .setting-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .setting-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+        }
+
+        .setting-options {
+            display: flex;
+            gap: 8px;
+        }
+
+        .option-btn {
+            flex: 1;
+            padding: 8px;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .option-btn.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .select-input {
+            width: 100%;
+            padding: 8px;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 6px;
+        }
+
+        .stats-table {
+            width: 100%;
+            margin: 16px 0;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .stats-table td {
+            padding: 8px 4px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .stats-table td:last-child {
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .action-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-list .btn {
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .tip-text {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            margin-top: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">TETRIS PRO</div>
+        <div class="top-controls">
+            <button class="btn" id="btn-ghost-toggle">预测落点: <span id="ghost-status">开</span></button>
+            <button class="btn" id="btn-bgm-toggle">BGM: <span id="bgm-status">开</span></button>
+            <button class="btn" id="btn-stats">数据统计</button>
+            <button class="btn btn-primary" id="btn-setup">游戏设置</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- 玩家 1 面板 -->
+        <div class="game-panel" id="panel-p1">
+            <div class="board-container">
+                <canvas id="board-p1" class="board" width="240" height="480"></canvas>
+            </div>
+            <div class="side-info">
+                <div class="info-card">
+                    <h4>玩家 1 分数</h4>
+                    <div class="value" id="score-p1">0</div>
+                    <div class="bonus-badge" id="bonus-p1" style="display:none;">+50% 加成</div>
+                </div>
+                <div class="info-card">
+                    <h4>关卡</h4>
+                    <div class="value" id="level-p1">1</div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="prog-p1"></div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h4>暂存 (Hold)</h4>
+                    <canvas id="hold-p1" class="mini-preview" width="80" height="80"></canvas>
+                </div>
+                <div class="info-card">
+                    <h4>下一个 (Next)</h4>
+                    <canvas id="next-p1" class="mini-preview" width="80" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 玩家 2 面板（默认隐藏） -->
+        <div class="game-panel" id="panel-p2" style="display: none;">
+            <div class="board-container">
+                <canvas id="board-p2" class="board" width="240" height="480"></canvas>
+            </div>
+            <div class="side-info">
+                <div class="info-card">
+                    <h4>玩家 2 分数</h4>
+                    <div class="value" id="score-p2">0</div>
+                    <div class="bonus-badge" id="bonus-p2" style="display:none;">+50% 加成</div>
+                </div>
+                <div class="info-card">
+                    <h4>关卡</h4>
+                    <div class="value" id="level-p2">1</div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="prog-p2"></div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h4>暂存 (Hold)</h4>
+                    <canvas id="hold-p2" class="mini-preview" width="80" height="80"></canvas>
+                </div>
+                <div class="info-card">
+                    <h4>下一个 (Next)</h4>
+                    <canvas id="next-p2" class="mini-preview" width="80" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. 游戏 Setup 设置弹窗 -->
+    <div class="modal-overlay" id="modal-setup">
+        <div class="modal-card">
+            <h2>游戏设置</h2>
+            <div class="setting-group">
+                <label>游戏模式</label>
+                <div class="setting-options">
+                    <div class="option-btn active" data-mode="1p">单人模式</div>
+                    <div class="option-btn" data-mode="2p">双人对战</div>
+                </div>
+            </div>
+            <div class="setting-group">
+                <label>初始等级 (1 - 10)</label>
+                <input type="number" id="cfg-start-level" class="select-input" value="1" min="1" max="10">
+            </div>
+            <div class="setting-group">
+                <label>升级速度 (每级所需行数)</label>
+                <div class="setting-options" id="cfg-lines-per-level">
+                    <div class="option-btn active" data-lines="10">10 行</div>
+                    <div class="option-btn" data-lines="20">20 行</div>
+                    <div class="option-btn" data-lines="30">30 行</div>
+                </div>
+            </div>
+            <div class="setting-group">
+                <label>背景音乐选择</label>
+                <select id="cfg-bgm-track" class="select-input">
+                    <option value="mario">超级马里奥兄弟 (Super Mario Bros.)</option>
+                    <option value="zelda">塞尔达传说 (The Legend of Zelda)</option>
+                    <option value="megaman">洛克人 2 (Mega Man 2)</option>
+                    <option value="castlevania">恶魔城 (Castlevania)</option>
+                    <option value="tetris" selected>俄罗斯方块 (Tetris)</option>
+                </select>
+            </div>
+            <div class="action-list">
+                <button class="btn btn-primary" id="btn-start-game">开始游戏</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 关卡升级统计弹窗 -->
+    <div class="modal-overlay hidden" id="modal-levelup">
+        <div class="modal-card">
+            <h2>LEVEL UP!</h2>
+            <p style="color:var(--accent-gold); font-size: 1.1rem; margin-bottom: 12px;" id="lvlup-title">玩家 1 提升至等级 2
+            </p>
+            <table class="stats-table">
+                <tr>
+                    <td>本关卡得分</td>
+                    <td id="lvlup-score">0</td>
+                </tr>
+                <tr>
+                    <td>消 1 行次数</td>
+                    <td id="lvlup-line1">0</td>
+                </tr>
+                <tr>
+                    <td>消 2 行次数</td>
+                    <td id="lvlup-line2">0</td>
+                </tr>
+                <tr>
+                    <td>消 3 行次数</td>
+                    <td id="lvlup-line3">0</td>
+                </tr>
+                <tr>
+                    <td>消 4 行 (Tetris) 次数</td>
+                    <td id="lvlup-line4">0</td>
+                </tr>
+                <tr>
+                    <td>硬降 (Hard Drop) 次数</td>
+                    <td id="lvlup-harddrops">0</td>
+                </tr>
+            </table>
+            <div class="tip-text">按键盘任意键或点击页面跳过</div>
+        </div>
+    </div>
+
+    <!-- 3. 双人对战结算弹窗 -->
+    <div class="modal-overlay hidden" id="modal-victory">
+        <div class="modal-card">
+            <h2 id="victory-title">PLAYER 1 获胜!</h2>
+            <div class="action-list">
+                <button class="btn btn-primary" id="v-opt-1">回到首页 (Game Setup)</button>
+                <button class="btn" id="v-opt-2">胜者继续游戏 (孤芳自赏)</button>
+                <button class="btn" id="v-opt-3">败者清空重来 (重生归来)</button>
+                <button class="btn" id="v-opt-4">败者复制方块 (不服再战)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 数据统计全局弹窗 -->
+    <div class="modal-overlay hidden" id="modal-stats">
+        <div class="modal-card">
+            <h2>数据统计</h2>
+            <div id="stats-content"></div>
+            <div class="action-list">
+                <button class="btn btn-primary" id="btn-close-stats">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 本地音频管理器 LocalAudioManager
+         * 从同级 /res/music/ 和 /res/audio/ 目录加载外部音效文件
+         */
+        class LocalAudioManager {
+            constructor() {
+                this.bgmVolume = 0.5;
+                this.sfxVolume = 0.8;
+                this.currentBgm = null;
+                this.currentBgmKey = null;
+                this.bgmEnabled = true;
+
+                this.bgmTracks = {
+                    mario: './res/music/mario.mp3',
+                    zelda: './res/music/zelda.mp3',
+                    megaman: './res/music/megaman.mp3',
+                    castlevania: './res/music/castlevania.mp3',
+                    tetris: './res/music/tetris.mp3'
+                };
+
+                this.sfxTracks = {
+                    move: './res/audio/move.wav',
+                    rotate: './res/audio/rotate.wav',
+                    drop: './res/audio/drop.wav',
+                    clear: './res/audio/clear.wav',
+                    levelup: './res/audio/levelup.wav',
+                    gameover: './res/audio/gameover.wav'
+                };
+
+                this.sfxCache = {};
+                this.preloadSFX();
+            }
+
+            preloadSFX() {
+                for (const [key, path] of Object.entries(this.sfxTracks)) {
+                    const audio = new Audio();
+                    audio.src = path;
+                    audio.preload = 'auto';
+                    this.sfxCache[key] = audio;
+                }
+            }
+
+            playBGM(key) {
+                if (!this.bgmEnabled || !this.bgmTracks[key]) return;
+
+                if (this.currentBgmKey === key && this.currentBgm && !this.currentBgm.paused) {
+                    return;
+                }
+
+                this.stopBGM();
+
+                this.currentBgmKey = key;
+                this.currentBgm = new Audio(this.bgmTracks[key]);
+                this.currentBgm.loop = true;
+                this.currentBgm.volume = this.bgmVolume;
+
+                this.currentBgm.play().catch(err => {
+                    console.warn("BGM 自动播放受阻，等待交互后自动恢复", err);
+                });
+            }
+
+            pauseBGM() {
+                if (this.currentBgm) {
+                    this.currentBgm.pause();
+                }
+            }
+
+            resumeBGM() {
+                if (this.bgmEnabled && this.currentBgm && this.currentBgm.paused) {
+                    this.currentBgm.play().catch(() => { });
+                }
+            }
+
+            stopBGM() {
+                if (this.currentBgm) {
+                    this.currentBgm.pause();
+                    this.currentBgm.currentTime = 0;
+                    this.currentBgm = null;
+                    this.currentBgmKey = null;
+                }
+            }
+
+            playSFX(key) {
+                if (!this.sfxTracks[key]) return;
+                const sound = new Audio(this.sfxTracks[key]);
+                sound.volume = this.sfxVolume;
+                sound.play().catch(() => { });
+            }
+
+            setBGMVolume(vol) {
+                this.bgmVolume = Math.max(0, Math.min(1, vol));
+                if (this.currentBgm) {
+                    this.currentBgm.volume = this.bgmVolume;
+                }
+            }
+        }
+
+        const audioMgr = new LocalAudioManager();
+
+        // 俄罗斯方块核心常量与配置
+        const COLS = 10;
+        const ROWS = 20;
+        const BLOCK_SIZE = 24;
+
+        const SHAPES = {
+            I: [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]],
+            J: [[1, 0, 0], [1, 1, 1], [0, 0, 0]],
+            L: [[0, 0, 1], [1, 1, 1], [0, 0, 0]],
+            O: [[1, 1], [1, 1]],
+            S: [[0, 1, 1], [1, 1, 0], [0, 0, 0]],
+            T: [[0, 1, 0], [1, 1, 1], [0, 0, 0]],
+            Z: [[1, 1, 0], [0, 1, 1], [0, 0, 0]]
+        };
+
+        const COLORS = {
+            I: '#00f0f0', J: '#0000f0', L: '#f0a000',
+            O: '#f0f000', S: '#00f000', T: '#a000f0', Z: '#f00000'
+        };
+
+        // 全局游戏状态
+        let gameMode = '1p'; // '1p' | '2p'
+        let linesPerLevel = 10;
+        let showGhost = true;
+        let currentBgmKey = 'tetris';
+        let isPaused = false;
+        let levelUpModalActive = false;
+        let levelUpCallback = null;
+
+        class TetrisEngine {
+            constructor(playerId, canvasId, holdCanvasId, nextCanvasId) {
+                this.id = playerId;
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.holdCanvas = document.getElementById(holdCanvasId);
+                this.holdCtx = this.holdCanvas.getContext('2d');
+                this.nextCanvas = document.getElementById(nextCanvasId);
+                this.nextCtx = this.nextCanvas.getContext('2d');
+
+                this.reset();
+            }
+
+            reset(startLevel = 1) {
+                this.grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+                this.score = 0;
+                this.level = startLevel;
+                this.totalLines = 0;
+                this.levelLines = 0;
+                this.isGameOver = false;
+
+                this.bag = [];
+                this.currentPiece = null;
+                this.holdPiece = null;
+                this.canHold = true;
+
+                // 统计数据
+                this.stats = {
+                    lineClears: { 1: 0, 2: 0, 3: 0, 4: 0 },
+                    hardDrops: 0,
+                    levelStats: { score: 0, line1: 0, line2: 0, line3: 0, line4: 0, hardDrops: 0 }
+                };
+
+                this.nextQueue = [];
+                for (let i = 0; i < 3; i++) this.nextQueue.push(this.generatePiece());
+                this.spawnPiece();
+
+                this.dropCounter = 0;
+                this.dropInterval = this.getSpeed();
+            }
+
+            getSpeed() {
+                return Math.max(50, 1000 - (this.level - 1) * 80);
+            }
+
+            generatePiece() {
+                if (this.bag.length === 0) {
+                    this.bag = ['I', 'J', 'L', 'O', 'S', 'T', 'Z'].sort(() => Math.random() - 0.5);
+                }
+                const type = this.bag.pop();
+                return {
+                    type,
+                    matrix: SHAPES[type],
+                    color: COLORS[type],
+                    x: Math.floor((COLS - SHAPES[type][0].length) / 2),
+                    y: 0
+                };
+            }
+
+            spawnPiece() {
+                this.currentPiece = this.nextQueue.shift();
+                this.nextQueue.push(this.generatePiece());
+                this.canHold = true;
+
+                if (this.checkCollision(this.currentPiece.matrix, this.currentPiece.x, this.currentPiece.y)) {
+                    this.isGameOver = true;
+                    audioMgr.playSFX('gameover');
+                }
+            }
+
+            checkCollision(matrix, offsetX, offsetY) {
+                for (let y = 0; y < matrix.length; y++) {
+                    for (let x = 0; x < matrix[y].length; x++) {
+                        if (matrix[y][x]) {
+                            const newX = offsetX + x;
+                            const newY = offsetY + y;
+                            if (newX < 0 || newX >= COLS || newY >= ROWS) return true;
+                            if (newY >= 0 && this.grid[newY][newX]) return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            rotate() {
+                if (this.isGameOver || isPaused) return;
+                const matrix = this.currentPiece.matrix;
+                const rotated = matrix[0].map((_, i) => matrix.map(row => row[i]).reverse());
+                if (!this.checkCollision(rotated, this.currentPiece.x, this.currentPiece.y)) {
+                    this.currentPiece.matrix = rotated;
+                    audioMgr.playSFX('rotate');
+                }
+            }
+
+            move(dir) {
+                if (this.isGameOver || isPaused) return;
+                if (!this.checkCollision(this.currentPiece.matrix, this.currentPiece.x + dir, this.currentPiece.y)) {
+                    this.currentPiece.x += dir;
+                    audioMgr.playSFX('move');
+                }
+            }
+
+            drop() {
+                if (this.isGameOver || isPaused) return;
+                if (!this.checkCollision(this.currentPiece.matrix, this.currentPiece.x, this.currentPiece.y + 1)) {
+                    this.currentPiece.y++;
+                    // 软降得分计算（预测落点关闭增加50%）
+                    const bonus = showGhost ? 1 : 1.5;
+                    this.addScore(1 * bonus);
+                } else {
+                    this.lockPiece();
+                }
+                this.dropCounter = 0;
+            }
+
+            hardDrop() {
+                if (this.isGameOver || isPaused) return;
+                let count = 0;
+                while (!this.checkCollision(this.currentPiece.matrix, this.currentPiece.x, this.currentPiece.y + 1)) {
+                    this.currentPiece.y++;
+                    count++;
+                }
+                const bonus = showGhost ? 1 : 1.5;
+                this.addScore(count * 2 * bonus);
+                this.stats.hardDrops++;
+                this.stats.levelStats.hardDrops++;
+                audioMgr.playSFX('drop');
+                this.lockPiece();
+            }
+
+            hold() {
+                if (!this.canHold || this.isGameOver || isPaused) return;
+                if (!this.holdPiece) {
+                    this.holdPiece = { type: this.currentPiece.type, matrix: SHAPES[this.currentPiece.type], color: COLORS[this.currentPiece.type] };
+                    this.spawnPiece();
+                } else {
+                    const temp = { type: this.currentPiece.type, matrix: SHAPES[this.currentPiece.type], color: COLORS[this.currentPiece.type] };
+                    this.currentPiece = { type: this.holdPiece.type, matrix: SHAPES[this.holdPiece.type], color: COLORS[this.holdPiece.type], x: Math.floor((COLS - SHAPES[this.holdPiece.type][0].length) / 2), y: 0 };
+                    this.holdPiece = temp;
+                }
+                this.canHold = false;
+                audioMgr.playSFX('move');
+            }
+
+            lockPiece() {
+                const matrix = this.currentPiece.matrix;
+                for (let y = 0; y < matrix.length; y++) {
+                    for (let x = 0; x < matrix[y].length; x++) {
+                        if (matrix[y][x]) {
+                            this.grid[this.currentPiece.y + y][this.currentPiece.x + x] = this.currentPiece.color;
+                        }
+                    }
+                }
+                this.clearLines();
+                this.spawnPiece();
+            }
+
+            clearLines() {
+                let cleared = 0;
+                for (let y = ROWS - 1; y >= 0; y--) {
+                    if (this.grid[y].every(cell => cell !== 0)) {
+                        this.grid.splice(y, 1);
+                        this.grid.unshift(Array(COLS).fill(0));
+                        cleared++;
+                        y++;
+                    }
+                }
+
+                if (cleared > 0) {
+                    audioMgr.playSFX('clear');
+                    this.stats.lineClears[cleared]++;
+                    this.stats.levelStats[`line${cleared}`]++;
+
+                    const baseScores = [0, 100, 300, 500, 800];
+                    const ghostBonus = showGhost ? 1 : 1.5;
+                    const points = baseScores[cleared] * this.level * ghostBonus;
+                    this.addScore(points);
+
+                    this.totalLines += cleared;
+                    this.levelLines += cleared;
+
+                    if (this.levelLines >= linesPerLevel) {
+                        this.levelLines -= linesPerLevel;
+                        this.triggerLevelUp();
+                    }
+                }
+            }
+
+            addScore(pts) {
+                const rounded = Math.round(pts);
+                this.score += rounded;
+                this.stats.levelStats.score += rounded;
+            }
+
+            triggerLevelUp() {
+                this.level++;
+                this.dropInterval = this.getSpeed();
+                audioMgr.playSFX('levelup');
+
+                // 展示升级关卡统计界面
+                showLevelUpModal(this);
+            }
+
+            getGhostY() {
+                let ghostY = this.currentPiece.y;
+                while (!this.checkCollision(this.currentPiece.matrix, this.currentPiece.x, ghostY + 1)) {
+                    ghostY++;
+                }
+                return ghostY;
+            }
+
+            update(deltaTime) {
+                if (this.isGameOver || isPaused) return;
+                this.dropCounter += deltaTime;
+                if (this.dropCounter > this.dropInterval) {
+                    this.drop();
+                }
+            }
+
+            draw() {
+                // 清空画布
+                this.ctx.fillStyle = '#090d16';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // 绘制网格线
+                this.ctx.strokeStyle = '#1e293b';
+                this.ctx.lineWidth = 0.5;
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        this.ctx.strokeRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    }
+                }
+
+                // 绘制固定方块
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        if (this.grid[r][c]) {
+                            this.drawBlock(this.ctx, c, r, this.grid[r][c]);
+                        }
+                    }
+                }
+
+                // 绘制活动方块与预测落点
+                if (this.currentPiece && !this.isGameOver) {
+                    if (showGhost) {
+                        const ghostY = this.getGhostY();
+                        this.drawPiece(this.ctx, this.currentPiece.matrix, this.currentPiece.x, ghostY, this.currentPiece.color, true);
+                    }
+                    this.drawPiece(this.ctx, this.currentPiece.matrix, this.currentPiece.x, this.currentPiece.y, this.currentPiece.color);
+                }
+
+                // 绘制预览区域
+                this.drawMiniPreview(this.holdCtx, this.holdPiece);
+                this.drawMiniPreview(this.nextCtx, this.nextQueue[0]);
+
+                // 更新 UI
+                document.getElementById(`score-${this.id}`).innerText = this.score;
+                document.getElementById(`level-${this.id}`).innerText = this.level;
+                document.getElementById(`bonus-${this.id}`).style.display = showGhost ? 'none' : 'block';
+
+                const progPercent = Math.min(100, (this.levelLines / linesPerLevel) * 100);
+                document.getElementById(`prog-${this.id}`).style.width = `${progPercent}%`;
+            }
+
+            drawBlock(ctx, x, y, color, isGhost = false) {
+                ctx.fillStyle = isGhost ? 'rgba(255,255,255,0.15)' : color;
+                ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                ctx.strokeStyle = isGhost ? color : '#0f172a';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            }
+
+            drawPiece(ctx, matrix, offsetX, offsetY, color, isGhost = false) {
+                for (let r = 0; r < matrix.length; r++) {
+                    for (let c = 0; c < matrix[r].length; c++) {
+                        if (matrix[r][c]) {
+                            this.drawBlock(ctx, offsetX + c, offsetY + r, color, isGhost);
+                        }
+                    }
+                }
+            }
+
+            drawMiniPreview(ctx, piece) {
+                ctx.fillStyle = '#090d16';
+                ctx.fillRect(0, 0, 80, 80);
+                if (!piece) return;
+
+                const matrix = piece.matrix;
+                const size = 16;
+                const offsetX = (80 - matrix[0].length * size) / 2;
+                const offsetY = (80 - matrix.length * size) / 2;
+
+                for (let r = 0; r < matrix.length; r++) {
+                    for (let c = 0; c < matrix[r].length; c++) {
+                        if (matrix[r][c]) {
+                            ctx.fillStyle = piece.color;
+                            ctx.fillRect(offsetX + c * size, offsetY + r * size, size, size);
+                            ctx.strokeStyle = '#0f172a';
+                            ctx.strokeRect(offsetX + c * size, offsetY + r * size, size, size);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 实例生成
+        const p1 = new TetrisEngine('p1', 'board-p1', 'hold-p1', 'next-p1');
+        const p2 = new TetrisEngine('p2', 'board-p2', 'hold-p2', 'next-p2');
+
+        // 主循环
+        let lastTime = 0;
+        function gameLoop(timestamp = 0) {
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+
+            p1.update(deltaTime);
+            p1.draw();
+
+            if (gameMode === '2p') {
+                p2.update(deltaTime);
+                p2.draw();
+                checkBattleOver();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 双人判定
+        function checkBattleOver() {
+            if (isPaused) return;
+
+            if (p1.isGameOver || p2.isGameOver) {
+                isPaused = true; // 立即暂停游戏循环，防止背景继续下落
+                const winner = p1.isGameOver ? 'PLAYER 2' : 'PLAYER 1';
+                document.getElementById('victory-title').innerText = `${winner} 获胜!`;
+                document.getElementById('modal-victory').classList.remove('hidden');
+            }
+        }
+
+        // 升级弹窗处理
+        function showLevelUpModal(player) {
+            isPaused = true;
+            levelUpModalActive = true;
+
+            document.getElementById('lvlup-title').innerText = `${player.id.toUpperCase()} 提升至等级 ${player.level}`;
+            document.getElementById('lvlup-score').innerText = player.stats.levelStats.score;
+            document.getElementById('lvlup-line1').innerText = player.stats.levelStats.line1;
+            document.getElementById('lvlup-line2').innerText = player.stats.levelStats.line2;
+            document.getElementById('lvlup-line3').innerText = player.stats.levelStats.line3;
+            document.getElementById('lvlup-line4').innerText = player.stats.levelStats.line4;
+            document.getElementById('lvlup-harddrops').innerText = player.stats.levelStats.hardDrops;
+
+            document.getElementById('modal-levelup').classList.remove('hidden');
+
+            levelUpCallback = () => {
+                // 清空本级统计
+                player.stats.levelStats = { score: 0, line1: 0, line2: 0, line3: 0, line4: 0, hardDrops: 0 };
+                document.getElementById('modal-levelup').classList.add('hidden');
+                levelUpModalActive = false;
+                isPaused = false;
+                levelUpCallback = null;
+            };
+        }
+
+        // 键盘事件按键拦截与映射
+        window.addEventListener('keydown', (e) => {
+            // 关卡升级按任意键跳过
+            if (levelUpModalActive && levelUpCallback) {
+                levelUpCallback();
+                return;
+            }
+
+            // 双人对战/单人操控按键
+            if (!isPaused) {
+                // 玩家 1 操控 (WASD + Space + Q/E)
+                if (e.code === 'KeyA') p1.move(-1);
+                if (e.code === 'KeyD') p1.move(1);
+                if (e.code === 'KeyW') p1.rotate();
+                if (e.code === 'KeyS') p1.drop();
+                if (e.code === 'Space') p1.hardDrop();
+                if (e.code === 'KeyE' || e.code === 'ShiftLeft') p1.hold();
+
+                if (gameMode === '2p') {
+                    // 玩家 2 操控 (方向键 + Enter + M/N)
+                    if (e.code === 'ArrowLeft') p2.move(-1);
+                    if (e.code === 'ArrowRight') p2.move(1);
+                    if (e.code === 'ArrowUp') p2.rotate();
+                    if (e.code === 'ArrowDown') p2.drop();
+                    if (e.code === 'Enter') p2.hardDrop();
+                    if (e.code === 'KeyN' || e.code === 'ShiftRight') p2.hold();
+                    if (e.code === 'KeyM') p2.rotate();
+                } else {
+                    // 单人模式下（包含P2胜出后孤芳自赏），方向键同样可操作 P1
+                    if (e.code === 'ArrowLeft') p1.move(-1);
+                    if (e.code === 'ArrowRight') p1.move(1);
+                    if (e.code === 'ArrowUp') p1.rotate();
+                    if (e.code === 'ArrowDown') p1.drop();
+                    if (e.code === 'Enter') p1.hardDrop();
+                }
+            }
+        });
+
+        document.getElementById('modal-levelup').addEventListener('click', () => {
+            if (levelUpModalActive && levelUpCallback) levelUpCallback();
+        });
+
+        // 顶栏按钮绑定
+        document.getElementById('btn-ghost-toggle').addEventListener('click', () => {
+            showGhost = !showGhost;
+            document.getElementById('ghost-status').innerText = showGhost ? '开' : '关 (+50%)';
+        });
+
+        document.getElementById('btn-bgm-toggle').addEventListener('click', () => {
+            audioMgr.bgmEnabled = !audioMgr.bgmEnabled;
+            document.getElementById('bgm-status').innerText = audioMgr.bgmEnabled ? '开' : '关';
+            if (audioMgr.bgmEnabled) {
+                audioMgr.playBGM(currentBgmKey);
+            } else {
+                audioMgr.pauseBGM();
+            }
+        });
+
+        document.getElementById('btn-setup').addEventListener('click', () => {
+            isPaused = true;
+            document.getElementById('modal-setup').classList.remove('hidden');
+        });
+
+        // Setup 选项逻辑
+        document.querySelectorAll('[data-mode]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                gameMode = e.target.dataset.mode;
+            });
+        });
+
+        document.querySelectorAll('[data-lines]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('[data-lines]').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                linesPerLevel = parseInt(e.target.dataset.lines);
+            });
+        });
+
+        document.getElementById('btn-start-game').addEventListener('click', () => {
+            const startLevel = parseInt(document.getElementById('cfg-start-level').value) || 1;
+            currentBgmKey = document.getElementById('cfg-bgm-track').value;
+
+            document.getElementById('panel-p2').style.display = (gameMode === '2p') ? 'flex' : 'none';
+
+            p1.reset(startLevel);
+            if (gameMode === '2p') p2.reset(startLevel);
+
+            document.getElementById('modal-setup').classList.add('hidden');
+            isPaused = false;
+            audioMgr.playBGM(currentBgmKey);
+        });
+
+        // 2P 胜负后四大选项处理
+        document.getElementById('v-opt-1').addEventListener('click', () => {
+            document.getElementById('modal-victory').classList.add('hidden');
+            document.getElementById('modal-setup').classList.remove('hidden');
+        });
+
+        document.getElementById('v-opt-2').addEventListener('click', () => {
+            // 孤芳自赏：胜者转换为单人模式继续
+            document.getElementById('modal-victory').classList.add('hidden');
+            gameMode = '1p';
+            document.getElementById('panel-p2').style.display = 'none';
+            if (p1.isGameOver) {
+                // P2 获胜，将 P2 数据继承给 P1
+                p1.grid = p2.grid;
+                p1.score = p2.score;
+                p1.level = p2.level;
+                p1.totalLines = p2.totalLines;
+                p1.isGameOver = false;
+                p1.currentPiece = p2.currentPiece;
+            } else {
+                p1.isGameOver = false;
+            }
+            isPaused = false;
+            audioMgr.resumeBGM();
+        });
+
+        document.getElementById('v-opt-3').addEventListener('click', () => {
+            // 重生归来：失败方清空面板后继续
+            document.getElementById('modal-victory').classList.add('hidden');
+            if (p1.isGameOver) p1.reset(p1.level);
+            if (p2.isGameOver) p2.reset(p2.level);
+            isPaused = false;
+            audioMgr.resumeBGM();
+        });
+
+        document.getElementById('v-opt-4').addEventListener('click', () => {
+            // 不服再战：失败方复制获胜方阵列后继续
+            document.getElementById('modal-victory').classList.add('hidden');
+            if (p1.isGameOver) {
+                p1.grid = p2.grid.map(row => [...row]);
+                p1.isGameOver = false;
+                p1.spawnPiece();
+            } else {
+                p2.grid = p1.grid.map(row => [...row]);
+                p2.isGameOver = false;
+                p2.spawnPiece();
+            }
+            isPaused = false;
+            audioMgr.resumeBGM();
+        });
+
+        // 全局数据统计弹窗
+        document.getElementById('btn-stats').addEventListener('click', () => {
+            isPaused = true;
+            const content = document.getElementById('stats-content');
+            content.innerHTML = `
+        <table class="stats-table">
+            <tr><td>P1 消 1 行/2 行/3 行/4 行</td><td>${p1.stats.lineClears[1]} / ${p1.stats.lineClears[2]} / ${p1.stats.lineClears[3]} / ${p1.stats.lineClears[4]}</td></tr>
+            <tr><td>P1 硬降落次数</td><td>${p1.stats.hardDrops} 次</td></tr>
+            ${gameMode === '2p' ? `
+            <tr><td>P2 消 1 行/2 行/3 行/4 行</td><td>${p2.stats.lineClears[1]} / ${p2.stats.lineClears[2]} / ${p2.stats.lineClears[3]} / ${p2.stats.lineClears[4]}</td></tr>
+            <tr><td>P2 硬降落次数</td><td>${p2.stats.hardDrops} 次</td></tr>
+            ` : ''}
+        </table>
+    `;
+            document.getElementById('modal-stats').classList.remove('hidden');
+        });
+
+        document.getElementById('btn-close-stats').addEventListener('click', () => {
+            document.getElementById('modal-stats').classList.add('hidden');
+            isPaused = false;
+        });
+
+        // 初始化启动
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+
+</html>
