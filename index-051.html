@@ -95,11 +95,11 @@
             border-color: #a5b4fc;
         }
 
-        /* Mobile-first: board nearly full screen width */
+        /* Mobile-first game board sizing */
         @media (max-width: 767px) {
             #p1GameCanvas,
             #p2GameCanvas {
-                width: min(96vw, 100%) !important;
+                width: min(88vw, 320px) !important;
                 height: auto !important;
                 aspect-ratio: 1 / 2;
             }
@@ -107,26 +107,14 @@
             #p1BoardContainer,
             #p2BoardContainer {
                 width: 100%;
-                max-width: 100%;
-            }
-
-            #p1CanvasCard,
-            #p2CanvasCard {
-                width: min(96vw, 100%);
-                padding: 0.25rem !important;
-            }
-
-            /* Compact HOLD / NEXT above board */
-            #p1BoardContainer .glass-panel,
-            #p2BoardContainer .glass-panel {
-                max-width: none;
+                max-width: 360px;
             }
         }
     </style>
 </head>
 
 <body
-    class="text-slate-100 min-h-screen flex flex-col justify-between items-center px-0.5 py-1 sm:p-4 overflow-x-hidden select-none">
+    class="text-slate-100 min-h-screen flex flex-col justify-between items-center p-1.5 sm:p-4 overflow-x-hidden select-none">
 
     <!-- Header -->
     <header class="w-full max-w-6xl flex justify-between items-center mb-1.5 sm:mb-4 px-1 sm:px-2">
@@ -504,7 +492,7 @@
 
             <!-- ================= PLAYER 1 BOARD ================= -->
             <div id="p1BoardContainer"
-                class="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-2 sm:gap-3 w-full max-w-full lg:max-w-none">
+                class="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-2 sm:gap-3 w-full max-w-[360px] lg:max-w-none">
 
                 <!-- Center column: HOLD + NEXT on top of the game board -->
                 <div class="relative order-1 lg:order-2 flex flex-col items-center gap-1.5 sm:gap-2 w-full lg:w-auto">
@@ -581,7 +569,7 @@
 
             <!-- ================= PLAYER 2 BOARD (2P Mode) ================= -->
             <div id="p2BoardContainer"
-                class="hidden flex-col lg:flex-row items-center lg:items-start justify-center gap-2 sm:gap-3 w-full max-w-full lg:max-w-none">
+                class="hidden flex-col lg:flex-row items-center lg:items-start justify-center gap-2 sm:gap-3 w-full max-w-[360px] lg:max-w-none">
 
                 <!-- Center column: HOLD + NEXT on top of the game board -->
                 <div class="relative order-1 lg:order-2 flex flex-col items-center gap-1.5 sm:gap-2 w-full lg:w-auto">
@@ -740,14 +728,12 @@
         <!-- Mobile swipe tip -->
         <p class="md:hidden text-[11px] text-slate-400 leading-relaxed">
             <i class="fa-solid fa-hand-pointer mr-1 text-cyan-400"></i>
-            滑动：←→ 移动 · ↓ 硬降 · ↑ 旋转 · 双击暂存 · 按住左右连续移动
-            <span class="block mt-0.5 text-slate-500"><i class="fa-solid fa-gamepad mr-1"></i>支持蓝牙手柄：方向移动 · A硬降 · B/Y旋转 · X暂存 · Start暂停</span>
+            滑动：←→ 移动 · ↓ 硬降 · ↑ 旋转 · 双击暂存 · 按住左右侧连续移动
         </p>
         <!-- Desktop keyboard tip -->
         <p class="hidden md:block">
             按键指南: <span class="text-indigo-300 font-bold">P1:</span> A/D 移动 | W 顺旋 | Q 逆旋 | S 软降 | Space 硬降 | E/Shift 暂存
             &nbsp;|&nbsp; <span class="text-rose-300 font-bold">P2:</span> ←/→ 移动 | ↑ 顺旋 | M 逆旋 | ↓ 软降 | Enter 硬降 | N 暂存
-            &nbsp;|&nbsp; <span class="text-emerald-300 font-bold">手柄:</span> 方向移动 · A硬降 · B/Y旋转 · X暂存 · Start暂停
         </p>
     </footer>
 
@@ -1358,37 +1344,31 @@
                 else if (linesCleared === 3) this.stats.triples++;
                 else if (linesCleared >= 4) this.stats.tetrises++;
 
-                // Animate bottom → top at fixed original indices (no shift during anim).
-                // Each row flashes then is blanked in place; gravity is applied once at the end.
+                // Clear from bottom to top so indices stay valid as we splice
+                // Sort ascending so we remove lower rows first after adjusting
+                // Actually: remove from highest index (bottom) first so upper indices unchanged
                 const sortedDesc = [...clearedRowIndices].sort((a, b) => b - a);
-                const clearedSet = new Set(clearedRowIndices);
 
                 for (let i = 0; i < sortedDesc.length; i++) {
                     const rowY = sortedDesc[i];
-                    if (rowY < 0 || rowY >= ROWS) continue;
-
-                    // Snapshot colors for particles before blanking
-                    const rowColors = this.board[rowY].slice();
-
+                    // Flash the row
                     this.flashingRows = [rowY];
-                    this.particleSys.addParticlesForLine(rowY, rowColors, this.blockSize);
+                    this.particleSys.addParticlesForLine(rowY, this.board[rowY], this.blockSize);
+                    // Pitch rises with each successive clear
                     sound.playSFX('clear', 1 + i * 0.15);
 
+                    // Brief flash hold
                     await new Promise(r => setTimeout(r, 160));
 
-                    // Blank the row in place (indices stay stable for remaining flashes)
-                    this.board[rowY] = Array(COLS).fill(0);
+                    // Remove this single row and shift down
+                    this.board.splice(rowY, 1);
+                    this.board.unshift(Array(COLS).fill(0));
                     this.flashingRows = [];
 
+                    // Gap between successive clears
                     if (i < sortedDesc.length - 1) {
                         await new Promise(r => setTimeout(r, 70));
                     }
-                }
-
-                // Gravity: drop non-cleared rows and pad empty rows at the top
-                this.board = this.board.filter((_, idx) => !clearedSet.has(idx));
-                while (this.board.length < ROWS) {
-                    this.board.unshift(Array(COLS).fill(0));
                 }
 
                 // Tetris bonus SFX
@@ -2184,123 +2164,31 @@
                     }, { passive: true });
                 });
 
-                // Clear any previous zoom from older versions
-                document.body.style.zoom = '';
-
-                // ========== Gamepad (wireless controller) support ==========
-                this._gpPrev = {};
-                this._gpRepeat = {}; // { key: nextFireTime }
-                const GP_DAS = 180;   // initial delay before repeat (ms)
-                const GP_ARR = 55;    // auto-repeat rate (ms)
-
-                this.pollGamepad = (now) => {
-                    if (!this.isStarted || this.isPaused) return;
-                    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-                    // Prefer first connected pad
-                    let gp = null;
-                    for (let i = 0; i < pads.length; i++) {
-                        if (pads[i] && pads[i].connected) { gp = pads[i]; break; }
-                    }
-                    if (!gp) return;
-
-                    const board = (this.mode === '2P' && this.p2 && !this.p2.isGameOver)
-                        ? this.p1  // primary controls still drive P1; P2 uses keyboard
-                        : this.p1;
-                    if (!board || board.isGameOver || board.isClearing) return;
-
-                    const pressed = (i) => !!(gp.buttons[i] && (gp.buttons[i].pressed || gp.buttons[i].value > 0.5));
-                    const axis = (i) => (gp.axes && gp.axes[i] != null) ? gp.axes[i] : 0;
-
-                    // Digital directions from D-pad + left stick
-                    const left  = pressed(14) || axis(0) < -0.5;
-                    const right = pressed(15) || axis(0) > 0.5;
-                    const up    = pressed(12) || axis(1) < -0.5;
-                    const down  = pressed(13) || axis(1) > 0.5;
-
-                    // Face buttons (standard layout)
-                    const btnA = pressed(0); // bottom  – hard drop
-                    const btnB = pressed(1); // right   – rotate CW
-                    const btnX = pressed(2); // left    – hold
-                    const btnY = pressed(3); // top     – rotate CCW
-                    const btnStart = pressed(9) || pressed(8); // start/select – pause
-
-                    const prev = this._gpPrev;
-                    const just = (name, on) => on && !prev[name];
-                    const edge = (name, on) => {
-                        const j = just(name, on);
-                        prev[name] = on;
-                        return j;
-                    };
-
-                    // Pause on Start (edge)
-                    if (edge('start', btnStart)) {
-                        this.togglePause();
+                // ========== Mobile auto page scale ==========
+                // Fit content on phones; ~65% works well on Pixel-class devices
+                const applyMobileScale = () => {
+                    const w = window.innerWidth;
+                    if (w >= 768) {
+                        document.body.style.zoom = '';
                         return;
                     }
-
-                    // One-shot actions
-                    if (edge('a', btnA)) board.hardDrop();
-                    if (edge('b', btnB)) board.rotatePiece(1);
-                    if (edge('y', btnY)) board.rotatePiece(-1);
-                    if (edge('x', btnX)) board.hold();
-                    if (edge('up', up)) board.rotatePiece(1);
-
-                    // Soft drop while held (no DAS needed, every frame is fine via repeat)
-                    if (edge('down', down)) board.softDrop();
-
-                    // Horizontal move with DAS / ARR
-                    const handleAxis = (name, active, action) => {
-                        if (!active) {
-                            delete this._gpRepeat[name];
-                            prev[name] = false;
-                            return;
-                        }
-                        if (!prev[name]) {
-                            // first press
-                            action();
-                            this._gpRepeat[name] = now + GP_DAS;
-                            prev[name] = true;
-                        } else if (this._gpRepeat[name] != null && now >= this._gpRepeat[name]) {
-                            action();
-                            this._gpRepeat[name] = now + GP_ARR;
-                        }
-                    };
-                    handleAxis('left', left, () => board.moveLeft());
-                    handleAxis('right', right, () => board.moveRight());
-
-                    // Continuous soft drop while held
-                    if (down) {
-                        if (!this._gpRepeat.downHold) this._gpRepeat.downHold = now + 40;
-                        if (now >= this._gpRepeat.downHold) {
-                            board.softDrop();
-                            this._gpRepeat.downHold = now + 40;
-                        }
-                    } else {
-                        delete this._gpRepeat.downHold;
-                    }
-
-                    // Keep prev in sync for directions we track via handleAxis
-                    prev.down = down;
+                    let z = 0.65;
+                    if (w < 360) z = 0.58;
+                    else if (w < 390) z = 0.62;
+                    else if (w <= 430) z = 0.65;   // Pixel 9 etc.
+                    else if (w < 500) z = 0.70;
+                    else if (w < 600) z = 0.78;
+                    else z = 0.85;
+                    document.body.style.zoom = String(z);
                 };
-
-                // Listen for gamepad connect/disconnect (some browsers need a button press first)
-                window.addEventListener('gamepadconnected', (e) => {
-                    console.log('Gamepad connected:', e.gamepad.id);
-                });
-                window.addEventListener('gamepaddisconnected', (e) => {
-                    console.log('Gamepad disconnected:', e.gamepad.id);
-                    this._gpPrev = {};
-                    this._gpRepeat = {};
-                });
+                applyMobileScale();
+                window.addEventListener('resize', applyMobileScale);
+                window.addEventListener('orientationchange', () => setTimeout(applyMobileScale, 120));
             }
 
             loop(time = 0) {
                 const deltaTime = time - this.lastTime;
                 this.lastTime = time;
-
-                if (typeof this.pollGamepad === 'function') {
-                    this.pollGamepad(time);
-                }
 
                 if (this.p1) this.p1.update(deltaTime);
                 if (this.mode === '2P' && this.p2) this.p2.update(deltaTime);
