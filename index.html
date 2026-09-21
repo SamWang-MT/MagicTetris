@@ -5,6 +5,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Tetris Game - 俄罗斯方块 (单人/双人对战与关卡数据统计)</title>
+
+    <!-- PWA -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Tetris">
+    <meta name="description" content="经典俄罗斯方块：单人/双人对战，支持触屏滑动与手柄">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icons/icon-180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
@@ -2278,6 +2291,15 @@
         window.addEventListener('load', () => {
             const gameManager = new TetrisManager();
             gameManager.loop();
+
+            // Register PWA Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js').then((reg) => {
+                    console.log('Service Worker registered:', reg.scope);
+                }).catch((err) => {
+                    console.warn('Service Worker registration failed:', err);
+                });
+            }
         });
     </script>
 </body>
