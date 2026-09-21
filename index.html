@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Tetris Game - 俄罗斯方块 (单人/双人对战与关卡数据统计)</title>
 
     <!-- PWA -->
@@ -110,6 +111,7 @@
 
         /* Mobile: board ~78vw so HOLD/NEXT/stats above stay visible */
         @media (max-width: 767px) {
+
             #p1GameCanvas,
             #p2GameCanvas {
                 width: min(78vw, 300px) !important;
@@ -176,15 +178,17 @@
                 <span class="hidden sm:inline">模式设置</span>
             </button>
             <button id="bgmToggleBtn"
-                class="p-2 sm:p-2.5 rounded-lg glass-panel hover:bg-slate-700/50 text-purple-400 transition" title="背景音乐曲目/开关">
+                class="p-2 sm:p-2.5 rounded-lg glass-panel hover:bg-slate-700/50 text-purple-400 transition"
+                title="背景音乐曲目/开关">
                 <i id="bgmIcon" class="fa-solid fa-music text-base sm:text-lg"></i>
             </button>
-            <button id="ghostBtn" class="p-2 sm:p-2.5 rounded-lg glass-panel hover:bg-slate-700/50 text-indigo-400 transition"
+            <button id="ghostBtn"
+                class="p-2 sm:p-2.5 rounded-lg glass-panel hover:bg-slate-700/50 text-indigo-400 transition"
                 title="预测落点开关">
                 <i id="ghostIcon" class="fa-solid fa-ghost text-base sm:text-lg"></i>
             </button>
-            <button id="audioBtn" class="p-2 sm:p-2.5 rounded-lg glass-panel hover:bg-slate-700/50 text-cyan-400 transition"
-                title="音效开关">
+            <button id="audioBtn"
+                class="p-2 sm:p-2.5 rounded-lg glass-panel hover:bg-slate-700/50 text-cyan-400 transition" title="音效开关">
                 <i id="audioIcon" class="fa-solid fa-volume-high text-base sm:text-lg"></i>
             </button>
             <button id="pauseBtn"
@@ -193,7 +197,8 @@
                 <i id="pauseIcon" class="fa-solid fa-pause text-base sm:text-lg"></i>
             </button>
             <button id="restartBtn"
-                class="p-2 sm:p-2.5 rounded-lg glass-panel hover:bg-slate-700/50 text-rose-400 transition hidden" title="重新开始">
+                class="p-2 sm:p-2.5 rounded-lg glass-panel hover:bg-slate-700/50 text-rose-400 transition hidden"
+                title="重新开始">
                 <i class="fa-solid fa-rotate-right text-base sm:text-lg"></i>
             </button>
         </div>
@@ -211,7 +216,7 @@
                     class="text-2xl sm:text-3xl font-bold font-arcade text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-300 to-purple-400 mb-1">
                     GAME SETUP
                 </h2>
-                <p class="text-xs text-slate-400">选择游戏模式并配置各玩家的初始关卡与升级参数</p>
+                <p class="text-xs text-slate-400">游戏模式并配置V2.01</p>
             </div>
 
             <!-- Mode Selector Tabs -->
@@ -515,44 +520,58 @@
     </div>
 
     <!-- Main Game Container -->
-    <main id="mainGameContainer" class="w-full max-w-6xl flex flex-col items-center justify-center gap-3 sm:gap-6 my-auto flex-1">
+    <main id="mainGameContainer"
+        class="w-full max-w-6xl flex flex-col items-center justify-center gap-3 sm:gap-6 my-auto flex-1">
 
         <div id="boardsWrapper"
             class="w-full flex flex-col md:flex-row items-center md:items-start justify-center gap-4 sm:gap-6">
 
             <!-- ================= PLAYER 1 BOARD ================= -->
-            <div id="p1BoardContainer"
-                class="flex flex-col items-center justify-center gap-1.5 sm:gap-2 w-full">
+            <div id="p1BoardContainer" class="flex flex-col items-center justify-center gap-1.5 sm:gap-2 w-full">
 
                 <!-- Top row: HOLD | NEXT | 最高+SCORE/等级 (same row above board) -->
                 <div class="board-top-row flex justify-center items-stretch gap-1 sm:gap-2">
-                    <div class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col items-center justify-center border border-slate-700/60 flex-1 min-w-0">
-                        <span class="text-[8px] sm:text-[10px] font-bold text-cyan-400 tracking-wider uppercase mb-0.5">HOLD</span>
-                        <div class="w-11 h-11 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg flex items-center justify-center p-0.5 border border-slate-800">
+                    <div
+                        class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col items-center justify-center border border-slate-700/60 flex-1 min-w-0">
+                        <span
+                            class="text-[8px] sm:text-[10px] font-bold text-cyan-400 tracking-wider uppercase mb-0.5">HOLD</span>
+                        <div
+                            class="w-11 h-11 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg flex items-center justify-center p-0.5 border border-slate-800">
                             <canvas id="p1HoldCanvas" width="80" height="80" class="w-full h-full"></canvas>
                         </div>
                     </div>
-                    <div class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col items-center justify-center border border-slate-700/60 flex-1 min-w-0">
-                        <span class="text-[8px] sm:text-[10px] font-bold text-cyan-400 tracking-wider uppercase mb-0.5">NEXT</span>
-                        <div class="w-11 h-11 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg flex items-center justify-center p-0.5 border border-slate-800">
+                    <div
+                        class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col items-center justify-center border border-slate-700/60 flex-1 min-w-0">
+                        <span
+                            class="text-[8px] sm:text-[10px] font-bold text-cyan-400 tracking-wider uppercase mb-0.5">NEXT</span>
+                        <div
+                            class="w-11 h-11 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg flex items-center justify-center p-0.5 border border-slate-800">
                             <canvas id="p1NextCanvas" width="80" height="80" class="w-full h-full"></canvas>
                         </div>
                     </div>
-                    <div class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col justify-center border border-slate-700/60 flex-[1.35] min-w-0 gap-0.5">
+                    <div
+                        class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col justify-center border border-slate-700/60 flex-[1.35] min-w-0 gap-0.5">
                         <div class="flex justify-between items-center gap-1">
-                            <span class="text-[8px] font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-0.5"></i>最高</span>
-                            <span id="p1HighScoreText" class="font-arcade text-[10px] sm:text-xs text-yellow-300 truncate">0</span>
+                            <span class="text-[8px] font-bold text-amber-400 uppercase"><i
+                                    class="fa-solid fa-trophy mr-0.5"></i>最高</span>
+                            <span id="p1HighScoreText"
+                                class="font-arcade text-[10px] sm:text-xs text-yellow-300 truncate">0</span>
                         </div>
                         <div class="flex justify-between items-center gap-1">
                             <span class="text-[8px] font-bold text-slate-400 uppercase">SCORE</span>
-                            <span id="p1ScoreText" class="font-arcade text-[10px] sm:text-xs text-cyan-300 truncate">0</span>
+                            <span id="p1ScoreText"
+                                class="font-arcade text-[10px] sm:text-xs text-cyan-300 truncate">0</span>
                         </div>
                         <div class="w-full bg-slate-900 rounded-full h-1 overflow-hidden border border-slate-800">
-                            <div id="p1LevelProgressBar" class="bg-gradient-to-r from-cyan-400 to-indigo-500 h-full w-0 transition-all duration-300"></div>
+                            <div id="p1LevelProgressBar"
+                                class="bg-gradient-to-r from-cyan-400 to-indigo-500 h-full w-0 transition-all duration-300">
+                            </div>
                         </div>
                         <div class="flex justify-between items-center text-[8px]">
-                            <span class="text-slate-400">LVL <span id="p1LevelText" class="font-arcade text-purple-300">1</span></span>
-                            <span class="text-slate-400">行 <span id="p1LinesText" class="font-arcade text-emerald-300">0</span></span>
+                            <span class="text-slate-400">LVL <span id="p1LevelText"
+                                    class="font-arcade text-purple-300">1</span></span>
+                            <span class="text-slate-400">行 <span id="p1LinesText"
+                                    class="font-arcade text-emerald-300">0</span></span>
                             <span id="p1LevelReqText" class="text-slate-500 hidden sm:inline">0/10</span>
                         </div>
                     </div>
@@ -561,7 +580,8 @@
                 <!-- Game Board Canvas -->
                 <div id="p1CanvasCard"
                     class="relative rounded-2xl p-1 sm:p-2 glass-panel border border-indigo-500/30 neon-border">
-                    <div class="absolute -top-2.5 left-2 sm:left-3 px-1.5 py-0.5 rounded-md bg-indigo-600 text-white font-bold text-[8px] sm:text-[10px] uppercase tracking-wider z-10 shadow-md">
+                    <div
+                        class="absolute -top-2.5 left-2 sm:left-3 px-1.5 py-0.5 rounded-md bg-indigo-600 text-white font-bold text-[8px] sm:text-[10px] uppercase tracking-wider z-10 shadow-md">
                         PLAYER 1
                     </div>
                     <canvas id="p1GameCanvas" width="280" height="560"
@@ -578,38 +598,51 @@
             </div>
 
             <!-- ================= PLAYER 2 BOARD (2P Mode) ================= -->
-            <div id="p2BoardContainer"
-                class="hidden flex-col items-center justify-center gap-1.5 sm:gap-2 w-full">
+            <div id="p2BoardContainer" class="hidden flex-col items-center justify-center gap-1.5 sm:gap-2 w-full">
 
                 <!-- Top row: HOLD | NEXT | 最高+SCORE/等级 -->
                 <div class="board-top-row flex justify-center items-stretch gap-1 sm:gap-2">
-                    <div class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col items-center justify-center border border-slate-700/60 flex-1 min-w-0">
-                        <span class="text-[8px] sm:text-[10px] font-bold text-rose-400 tracking-wider uppercase mb-0.5">HOLD</span>
-                        <div class="w-11 h-11 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg flex items-center justify-center p-0.5 border border-slate-800">
+                    <div
+                        class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col items-center justify-center border border-slate-700/60 flex-1 min-w-0">
+                        <span
+                            class="text-[8px] sm:text-[10px] font-bold text-rose-400 tracking-wider uppercase mb-0.5">HOLD</span>
+                        <div
+                            class="w-11 h-11 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg flex items-center justify-center p-0.5 border border-slate-800">
                             <canvas id="p2HoldCanvas" width="80" height="80" class="w-full h-full"></canvas>
                         </div>
                     </div>
-                    <div class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col items-center justify-center border border-slate-700/60 flex-1 min-w-0">
-                        <span class="text-[8px] sm:text-[10px] font-bold text-rose-400 tracking-wider uppercase mb-0.5">NEXT</span>
-                        <div class="w-11 h-11 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg flex items-center justify-center p-0.5 border border-slate-800">
+                    <div
+                        class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col items-center justify-center border border-slate-700/60 flex-1 min-w-0">
+                        <span
+                            class="text-[8px] sm:text-[10px] font-bold text-rose-400 tracking-wider uppercase mb-0.5">NEXT</span>
+                        <div
+                            class="w-11 h-11 sm:w-16 sm:h-16 bg-slate-900/80 rounded-lg flex items-center justify-center p-0.5 border border-slate-800">
                             <canvas id="p2NextCanvas" width="80" height="80" class="w-full h-full"></canvas>
                         </div>
                     </div>
-                    <div class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col justify-center border border-slate-700/60 flex-[1.35] min-w-0 gap-0.5">
+                    <div
+                        class="glass-panel p-1 sm:p-2 rounded-xl flex flex-col justify-center border border-slate-700/60 flex-[1.35] min-w-0 gap-0.5">
                         <div class="flex justify-between items-center gap-1">
-                            <span class="text-[8px] font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-0.5"></i>最高</span>
-                            <span id="p2HighScoreText" class="font-arcade text-[10px] sm:text-xs text-yellow-300 truncate">0</span>
+                            <span class="text-[8px] font-bold text-amber-400 uppercase"><i
+                                    class="fa-solid fa-trophy mr-0.5"></i>最高</span>
+                            <span id="p2HighScoreText"
+                                class="font-arcade text-[10px] sm:text-xs text-yellow-300 truncate">0</span>
                         </div>
                         <div class="flex justify-between items-center gap-1">
                             <span class="text-[8px] font-bold text-slate-400 uppercase">SCORE</span>
-                            <span id="p2ScoreText" class="font-arcade text-[10px] sm:text-xs text-rose-300 truncate">0</span>
+                            <span id="p2ScoreText"
+                                class="font-arcade text-[10px] sm:text-xs text-rose-300 truncate">0</span>
                         </div>
                         <div class="w-full bg-slate-900 rounded-full h-1 overflow-hidden border border-slate-800">
-                            <div id="p2LevelProgressBar" class="bg-gradient-to-r from-rose-400 to-amber-500 h-full w-0 transition-all duration-300"></div>
+                            <div id="p2LevelProgressBar"
+                                class="bg-gradient-to-r from-rose-400 to-amber-500 h-full w-0 transition-all duration-300">
+                            </div>
                         </div>
                         <div class="flex justify-between items-center text-[8px]">
-                            <span class="text-slate-400">LVL <span id="p2LevelText" class="font-arcade text-purple-300">1</span></span>
-                            <span class="text-slate-400">行 <span id="p2LinesText" class="font-arcade text-emerald-300">0</span></span>
+                            <span class="text-slate-400">LVL <span id="p2LevelText"
+                                    class="font-arcade text-purple-300">1</span></span>
+                            <span class="text-slate-400">行 <span id="p2LinesText"
+                                    class="font-arcade text-emerald-300">0</span></span>
                             <span id="p2LevelReqText" class="text-slate-500 hidden sm:inline">0/10</span>
                         </div>
                     </div>
@@ -618,7 +651,8 @@
                 <!-- Game Board Canvas -->
                 <div id="p2CanvasCard"
                     class="relative rounded-2xl p-1 sm:p-2 glass-panel border border-rose-500/30 neon-border-p2">
-                    <div class="absolute -top-2.5 left-2 sm:left-3 px-1.5 py-0.5 rounded-md bg-rose-600 text-white font-bold text-[8px] sm:text-[10px] uppercase tracking-wider z-10 shadow-md">
+                    <div
+                        class="absolute -top-2.5 left-2 sm:left-3 px-1.5 py-0.5 rounded-md bg-rose-600 text-white font-bold text-[8px] sm:text-[10px] uppercase tracking-wider z-10 shadow-md">
                         PLAYER 2
                     </div>
                     <canvas id="p2GameCanvas" width="280" height="560"
@@ -719,7 +753,8 @@
         <p class="md:hidden text-[11px] text-slate-400 leading-relaxed">
             <i class="fa-solid fa-hand-pointer mr-1 text-cyan-400"></i>
             滑动：←→ 移动 · ↓ 硬降 · ↑ 旋转 · 双击暂存 · 按住左右连续移动
-            <span class="block mt-0.5 text-slate-500"><i class="fa-solid fa-gamepad mr-1"></i>支持蓝牙手柄：方向移动 · A硬降 · B/Y旋转 · X暂存 · Start暂停</span>
+            <span class="block mt-0.5 text-slate-500"><i class="fa-solid fa-gamepad mr-1"></i>支持蓝牙手柄：方向移动 · A硬降 · B/Y旋转
+                · X暂存 · Start暂停</span>
         </p>
         <!-- Desktop keyboard tip -->
         <p class="hidden md:block">
@@ -2190,10 +2225,10 @@
                     const axis = (i) => (gp.axes && gp.axes[i] != null) ? gp.axes[i] : 0;
 
                     // Digital directions from D-pad + left stick
-                    const left  = pressed(14) || axis(0) < -0.5;
+                    const left = pressed(14) || axis(0) < -0.5;
                     const right = pressed(15) || axis(0) > 0.5;
-                    const up    = pressed(12) || axis(1) < -0.5;
-                    const down  = pressed(13) || axis(1) > 0.5;
+                    const up = pressed(12) || axis(1) < -0.5;
+                    const down = pressed(13) || axis(1) > 0.5;
 
                     // Face buttons (standard layout)
                     const btnA = pressed(0); // bottom  – hard drop
