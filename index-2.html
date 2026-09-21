@@ -201,55 +201,8 @@
                 title="重新开始">
                 <i class="fa-solid fa-rotate-right text-base sm:text-lg"></i>
             </button>
-            <button id="installBtn"
-                class="hidden p-2 sm:px-3 sm:py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white transition text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-emerald-500/20"
-                title="安装到桌面">
-                <i class="fa-solid fa-download text-base sm:text-sm"></i>
-                <span class="hidden sm:inline">安装</span>
-            </button>
         </div>
     </header>
-
-    <!-- PWA Install Banner (mobile-friendly) -->
-    <div id="installBanner"
-        class="hidden fixed bottom-3 left-3 right-3 z-50 max-w-md mx-auto glass-panel border border-emerald-500/40 rounded-2xl p-3 shadow-2xl flex items-center gap-3">
-        <div
-            class="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shrink-0">
-            <i class="fa-solid font-arcade text-yellow-300 text-lg">T</i>
-        </div>
-        <div class="flex-1 min-w-0">
-            <p class="text-sm font-bold text-white">安装 Tetris 到桌面</p>
-            <p class="text-[11px] text-slate-400">像 App 一样全屏畅玩</p>
-        </div>
-        <button id="installBannerBtn"
-            class="px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-bold shrink-0">
-            安装
-        </button>
-        <button id="installBannerClose" class="p-1.5 text-slate-400 hover:text-white shrink-0" title="关闭">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-    </div>
-
-    <!-- iOS install tip modal -->
-    <div id="iosInstallModal"
-        class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-sm rounded-2xl p-5 border border-indigo-500/30 text-center">
-            <div
-                class="w-12 h-12 mx-auto mb-3 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center text-xl">
-                <i class="fa-brands fa-apple"></i>
-            </div>
-            <h3 class="text-base font-bold text-white mb-2">添加到主屏幕</h3>
-            <p class="text-xs text-slate-300 leading-relaxed mb-4">
-                在 Safari 中点击底部 <strong class="text-cyan-300">分享</strong>
-                <i class="fa-solid fa-arrow-up-from-bracket mx-0.5"></i>
-                ，然后选择 <strong class="text-cyan-300">「添加到主屏幕」</strong>
-            </p>
-            <button id="iosInstallClose"
-                class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition">
-                知道了
-            </button>
-        </div>
-    </div>
 
     <!-- Mode Selection & Settings Modal (Game Setup Menu) -->
     <div id="startMenuModal"
@@ -263,7 +216,7 @@
                     class="text-2xl sm:text-3xl font-bold font-arcade text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-300 to-purple-400 mb-1">
                     GAME SETUP
                 </h2>
-                <p class="text-xs text-slate-400">选择游戏模式并配置 V2.02</p>
+                <p class="text-xs text-slate-400">游戏模式并配置V2.01</p>
             </div>
 
             <!-- Mode Selector Tabs -->
@@ -2369,72 +2322,6 @@
             }
         }
 
-        // ---------- PWA Install Prompt ----------
-        let deferredInstallPrompt = null;
-
-        const isIos = () => {
-            const ua = navigator.userAgent || '';
-            return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        };
-        const isInStandalone = () =>
-            window.matchMedia('(display-mode: standalone)').matches ||
-            window.navigator.standalone === true;
-
-        const showInstallUI = () => {
-            if (isInStandalone()) return;
-            const btn = document.getElementById('installBtn');
-            const banner = document.getElementById('installBanner');
-            if (btn) btn.classList.remove('hidden');
-            // Banner: only if user hasn't dismissed this session
-            if (banner && !sessionStorage.getItem('pwa_install_dismissed')) {
-                banner.classList.remove('hidden');
-            }
-        };
-
-        const hideInstallUI = () => {
-            const btn = document.getElementById('installBtn');
-            const banner = document.getElementById('installBanner');
-            if (btn) btn.classList.add('hidden');
-            if (banner) banner.classList.add('hidden');
-        };
-
-        const triggerInstall = async () => {
-            // Already installed
-            if (isInStandalone()) {
-                hideInstallUI();
-                return;
-            }
-            // Android / Desktop Chrome
-            if (deferredInstallPrompt) {
-                deferredInstallPrompt.prompt();
-                const { outcome } = await deferredInstallPrompt.userChoice;
-                console.log('PWA install outcome:', outcome);
-                deferredInstallPrompt = null;
-                hideInstallUI();
-                return;
-            }
-            // iOS: show manual instructions
-            if (isIos()) {
-                document.getElementById('iosInstallModal').classList.remove('hidden');
-                return;
-            }
-            // Fallback tip
-            alert('请使用浏览器菜单中的「安装应用」或「添加到主屏幕」完成安装。\n（需通过 http://localhost 或 HTTPS 访问）');
-        };
-
-        // Capture install prompt (must register early)
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredInstallPrompt = e;
-            showInstallUI();
-        });
-
-        window.addEventListener('appinstalled', () => {
-            deferredInstallPrompt = null;
-            hideInstallUI();
-            console.log('PWA installed');
-        });
-
         // Initialize Game Manager on window load
         window.addEventListener('load', () => {
             const gameManager = new TetrisManager();
@@ -2447,31 +2334,6 @@
                 }).catch((err) => {
                     console.warn('Service Worker registration failed:', err);
                 });
-            }
-
-            // Wire install buttons
-            const installBtn = document.getElementById('installBtn');
-            const installBannerBtn = document.getElementById('installBannerBtn');
-            const installBannerClose = document.getElementById('installBannerClose');
-            const iosInstallClose = document.getElementById('iosInstallClose');
-
-            if (installBtn) installBtn.addEventListener('click', triggerInstall);
-            if (installBannerBtn) installBannerBtn.addEventListener('click', triggerInstall);
-            if (installBannerClose) {
-                installBannerClose.addEventListener('click', () => {
-                    document.getElementById('installBanner').classList.add('hidden');
-                    sessionStorage.setItem('pwa_install_dismissed', '1');
-                });
-            }
-            if (iosInstallClose) {
-                iosInstallClose.addEventListener('click', () => {
-                    document.getElementById('iosInstallModal').classList.add('hidden');
-                });
-            }
-
-            // iOS / no beforeinstallprompt: still show header install button for tip
-            if (!isInStandalone() && isIos()) {
-                showInstallUI();
             }
         });
     </script>
